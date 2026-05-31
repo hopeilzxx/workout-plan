@@ -1,0 +1,1645 @@
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="增重打卡">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192x192.png">
+<title>增重打卡</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ========== THEME VARIABLES ========== */
+:root {
+  /* Light theme (default) */
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --card-hover: #fafafa;
+  --border: #e8e8ed;
+  --border-light: #f0f0f5;
+  --text: #1d1d1f;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
+  --accent: #0071e3;
+  --accent-bg: #e8f2ff;
+  --accent-text: #0071e3;
+  --green: #34c759;
+  --green-bg: #eafbf0;
+  --green-text: #1a7d3a;
+  --orange: #ff9f0a;
+  --orange-bg: #fff5e6;
+  --orange-text: #c47a08;
+  --red: #ff3b30;
+  --red-bg: #fff0f0;
+  --red-text: #cc2d25;
+  --purple: #af52de;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.05);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.1);
+  --radius: 18px;
+  --radius-sm: 14px;
+  --radius-xs: 10px;
+  --font: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1c;
+  --card: #242426;
+  --card-hover: #2a2a2c;
+  --border: #3a3a3c;
+  --border-light: #2e2e30;
+  --text: #f0ede8;
+  --text2: #b8b5b0;
+  --text3: #7a7872;
+  --accent: #d4a574;
+  --accent-bg: rgba(212,165,116,0.12);
+  --accent-text: #d4a574;
+  --green: #7a9e7a;
+  --green-bg: rgba(122,158,122,0.12);
+  --green-text: #7a9e7a;
+  --orange: #d4956a;
+  --orange-bg: rgba(212,149,106,0.12);
+  --orange-text: #d4956a;
+  --red: #ff6b6b;
+  --red-bg: rgba(255,107,107,0.12);
+  --red-text: #ff6b6b;
+  --purple: #bf5af5;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.2);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* ========== BASE ========== */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 16px 120px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+a { color: var(--accent); text-decoration: none; }
+
+/* ========== HEADER ========== */
+.header {
+  padding: 20px 0 10px;
+  position: relative;
+}
+.header .top-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.header .greeting {
+  font-size: 13px; color: var(--text3); font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+}
+.header .greeting .wave {
+  display: inline-block;
+  animation: wave 2.5s ease-in-out infinite;
+  transform-origin: 70% 70%;
+}
+@keyframes wave {
+  0%,60%,100% { transform: rotate(0deg); }
+  10%,30% { transform: rotate(14deg); }
+  20%,40% { transform: rotate(-8deg); }
+  50% { transform: rotate(12deg); }
+}
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--text2);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm); transition: all 0.15s;
+}
+.theme-toggle:active { transform: scale(0.92); }
+.header .tag {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  color: var(--accent-text); background: var(--accent-bg);
+  padding: 3px 10px; border-radius: 20px;
+  letter-spacing: 0.3px; margin-bottom: 8px;
+}
+.header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; font-family: var(--font-display); }
+.header .sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+/* ========== DATE NAV ========== */
+.date-nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 14px 0 8px;
+}
+.date-nav button {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: none; background: var(--card);
+  color: var(--text); font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm); transition: all 0.15s;
+}
+.date-nav button:active { transform: scale(0.92); background: var(--card-hover); }
+.date-nav .today-btn {
+  font-size: 12px !important; width: auto !important;
+  border-radius: 20px !important; padding: 0 14px !important;
+  font-weight: 600; color: var(--accent-text) !important;
+  background: var(--accent-bg) !important;
+}
+.date-display { text-align: center; }
+.date-display .date-main { font-size: 16px; font-weight: 700; }
+.date-display .date-week { font-size: 12px; color: var(--text2); font-weight: 500; margin-top: 1px; }
+
+/* ========== OVERVIEW CARDS (weight tracking) ========== */
+.overview-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 4px;
+}
+.overview-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 14px 14px 12px; box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.overview-card:active { box-shadow: var(--shadow-md); }
+.ov-label {
+  font-size: 11px; color: var(--text3); font-weight: 600;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 4px;
+  letter-spacing: 0.3px;
+}
+.ov-value { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+.ov-unit { font-size: 13px; font-weight: 600; color: var(--text2); margin-left: 3px; }
+.ov-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.ov-trend-up { color: var(--green-text); font-weight: 700; }
+.ov-trend-down { color: var(--red-text); font-weight: 700; }
+
+/* ========== SECTION LABEL ========== */
+.section-label {
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1.2px;
+  margin: 22px 4px 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ========== TABS ========== */
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  margin: 0 -16px; padding: 0 16px;
+}
+.tab {
+  flex: 1; text-align: center; padding: 10px 0;
+  font-size: 13px; font-weight: 600; color: var(--text3);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all 0.15s;
+}
+.tab.on { color: var(--accent-text); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.on { display: block; }
+
+/* ========== QUESTION CARD ========== */
+.q-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 8px; box-shadow: var(--shadow-sm);
+}
+.q-card .q-title {
+  font-size: 14px; font-weight: 700; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.q-btn-row { display: flex; gap: 8px; }
+.q-btn {
+  flex: 1; padding: 10px 0; border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border); background: var(--bg);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  text-align: center; transition: all 0.12s; color: var(--text2);
+}
+.q-btn:active { transform: scale(0.97); }
+.q-btn.active-yes { background: var(--green-bg); border-color: var(--green); color: var(--green-text); }
+.q-btn.active-no { background: var(--red-bg); border-color: var(--red); color: var(--red-text); }
+
+/* ========== MEAL CARD ========== */
+.meal-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 14px; box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.meal-card .meal-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.meal-card .meal-title { font-size: 14px; font-weight: 700; }
+.meal-card .meal-cal { font-size: 13px; font-weight: 800; color: var(--orange-text); }
+.meal-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+.meal-row:last-child { border-bottom: none; }
+.meal-row .m-time {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  min-width: 52px; padding-top: 1px;
+}
+.meal-row .m-food { flex: 1; line-height: 1.45; color: var(--text); }
+.meal-row .m-cal { font-weight: 700; color: var(--orange-text); font-size: 12px; white-space: nowrap; }
+
+.cal-summary { display: flex; gap: 8px; margin-top: 10px; }
+.cal-box {
+  flex: 1; text-align: center; padding: 9px 0;
+  border-radius: var(--radius-xs); font-size: 12px; font-weight: 600;
+}
+.cal-box .big { font-size: 20px; font-weight: 800; display: block; }
+.cal-box.target { background: var(--orange-bg); color: var(--orange-text); }
+.cal-box.actual { background: var(--green-bg); color: var(--green-text); }
+
+.cal-input-row {
+  display: flex; gap: 8px; align-items: center;
+  margin-top: 8px; background: var(--bg);
+  border-radius: var(--radius-xs); padding: 8px 12px;
+}
+.cal-input-row span { font-size: 12px; color: var(--text2); }
+.cal-input-row input {
+  width: 68px; background: var(--card); border: 1.5px solid var(--border);
+  color: var(--text); padding: 6px 10px; border-radius: var(--radius-xs);
+  font-size: 14px; text-align: center; -webkit-appearance: none;
+}
+.cal-input-row input:focus { outline: none; border-color: var(--accent); }
+.cal-input-row button {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius-xs); padding: 6px 14px;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.12s;
+  font-family: var(--font);
+}
+.cal-input-row button:active { transform: scale(0.95); opacity: 0.85; }
+
+.meal-note {
+  margin-top: 8px; font-size: 12px; color: var(--text2);
+  line-height: 1.5; padding: 8px 12px;
+  background: var(--bg); border-radius: var(--radius-xs);
+}
+.meal-note b { color: var(--text); }
+
+/* ========== STATUS BADGE ========== */
+.status-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.badge {
+  flex: 1; padding: 12px; border-radius: var(--radius-xs);
+  text-align: center; font-size: 13px; font-weight: 700; line-height: 1.35;
+}
+.badge .big { font-size: 24px; display: block; margin-bottom: 3px; }
+.badge.training { background: var(--green-bg); color: var(--green-text); }
+.badge.rest     { background: var(--accent-bg); color: var(--accent-text); }
+
+/* ========== EXERCISE CARD (accordion style) ========== */
+.ex-list { margin-bottom: 8px; }
+.ex-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  margin-bottom: 6px; box-shadow: var(--shadow-sm);
+  overflow: hidden; transition: box-shadow 0.2s;
+}
+.ex-card.expanded { box-shadow: 0 0 0 2px var(--green), var(--shadow-sm); }
+
+.ex-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px; cursor: pointer; transition: background 0.12s;
+}
+.ex-header:active { background: var(--card-hover); }
+.ex-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.ex-icon.squat { background: #fff3e0; }
+.ex-icon.bench { background: #e3f2fd; }
+.ex-icon.row   { background: #f3e5f5; }
+[data-theme="dark"] .ex-icon.squat { background: rgba(255,180,50,0.15); }
+[data-theme="dark"] .ex-icon.bench { background: rgba(66,165,245,0.15); }
+[data-theme="dark"] .ex-icon.row   { background: rgba(171,71,188,0.15); }
+
+.ex-info { flex: 1; min-width: 0; }
+.ex-name { font-size: 15px; font-weight: 700; }
+.ex-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+.ex-status {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 20px; flex-shrink: 0;
+}
+.ex-status.doing { background: var(--orange-bg); color: var(--orange-text); }
+.ex-status.done  { background: var(--green-bg); color: var(--green-text); }
+
+.ex-arrow {
+  font-size: 12px; color: var(--text3); transition: transform 0.2s ease;
+  flex-shrink: 0; margin-left: 4px;
+}
+.ex-card.expanded .ex-arrow { transform: rotate(180deg); }
+
+/* Exercise detail (expandable) */
+.ex-detail {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.ex-card.expanded .ex-detail { max-height: 600px; }
+
+.ex-detail-inner { padding: 0 14px 14px; }
+
+.input-row {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap;
+}
+.input-row label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.input-row input {
+  flex: 1; min-width: 52px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  color: var(--text); padding: 7px 10px;
+  border-radius: var(--radius-xs); font-size: 14px; text-align: center;
+  -webkit-appearance: none;
+}
+.input-row input:focus { outline: none; border-color: var(--accent); }
+.input-row .unit { font-size: 12px; color: var(--text2); }
+
+.sets-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.set-btn {
+  width: 40px; height: 40px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: var(--bg);
+  color: var(--text2); font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.set-btn:active { transform: scale(0.92); }
+.set-btn.checked { background: var(--green); border-color: var(--green); color: #fff; }
+
+.progress-wrap { margin-top: 8px; }
+.progress-bar { height: 4px; background: var(--border-light); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s ease; }
+
+.upgrade-hint {
+  margin-top: 8px; padding: 8px 12px;
+  background: var(--orange-bg); border-radius: var(--radius-xs);
+  font-size: 12px; color: var(--orange-text); display: none; line-height: 1.5;
+}
+.upgrade-hint.show { display: block; }
+
+/* ========== REST CARD ========== */
+.rest-card {
+  text-align: center; padding: 40px 20px 32px;
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.rest-card .big-emoji { font-size: 52px; margin-bottom: 12px; }
+.rest-card h2 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+.rest-card p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+.rest-card .next-hint {
+  margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--accent-text);
+  background: var(--accent-bg); display: inline-block;
+  padding: 5px 14px; border-radius: 20px;
+}
+
+/* ========== WARMUP CARD ========== */
+.warmup-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-top: 8px; box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 10px;
+}
+.warmup-card .warm-icon { font-size: 22px; }
+.warmup-card .warm-text .warm-title { font-size: 13px; font-weight: 700; }
+.warmup-card .warm-text .warm-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+/* ========== WEIGHT LOG CARD ========== */
+.weight-log-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 14px; box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.weight-log-card .wl-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.weight-log-card .wl-title { font-size: 14px; font-weight: 700; }
+.weight-log-card .wl-trend {
+  font-size: 12px; font-weight: 700;
+}
+.weight-input-row {
+  display: flex; gap: 8px; align-items: center;
+  background: var(--bg); border-radius: var(--radius-xs); padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.weight-input-row label { font-size: 12px; color: var(--text2); }
+.weight-input-row input {
+  width: 72px; background: var(--card); border: 1.5px solid var(--border);
+  color: var(--text); padding: 6px 10px; border-radius: var(--radius-xs);
+  font-size: 16px; font-weight: 700; text-align: center;
+  -webkit-appearance: none;
+}
+.weight-input-row input:focus { outline: none; border-color: var(--accent); }
+.weight-input-row .unit { font-size: 12px; color: var(--text2); }
+.weight-input-row button {
+  background: var(--accent); color: #fff; border: none;
+  border-radius: var(--radius-xs); padding: 6px 14px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: var(--font); transition: all 0.12s;
+}
+.weight-input-row button:active { transform: scale(0.95); }
+
+.weight-mini-chart {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 60px; padding: 0 4px;
+}
+.weight-bar-wrap {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end; height: 100%; min-width: 0;
+}
+.weight-bar {
+  width: 100%; max-width: 18px; border-radius: 3px 3px 0 0;
+  background: var(--accent); min-height: 3px;
+  transition: height 0.3s ease;
+}
+.weight-bar-label {
+  font-size: 8px; color: var(--text3); margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; text-align: center;
+}
+
+/* ========== HISTORY ========== */
+.history-card {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 4px 14px; box-shadow: var(--shadow-sm);
+}
+.history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+.history-item:last-child { border-bottom: none; }
+.history-item .hi-date { color: var(--text2); }
+.history-item .hi-data { font-weight: 700; color: var(--text); }
+
+/* ========== BOTTOM BAR ========== */
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--border);
+  padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+  display: flex; gap: 10px; z-index: 50;
+  transition: background 0.3s ease;
+}
+[data-theme="dark"] .bottom-bar {
+  background: rgba(26,26,28,0.92);
+}
+.bottom-bar .btn {
+  flex: 1; padding: 13px; border-radius: var(--radius-sm);
+  font-size: 15px; font-weight: 700; border: none; cursor: pointer;
+  text-align: center; transition: all 0.12s; font-family: var(--font);
+}
+.bottom-bar .btn:active { transform: scale(0.97); }
+.btn-stats  { background: var(--bg); color: var(--text2); }
+.btn-primary {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 4px 12px rgba(0,113,227,0.2);
+  position: relative; overflow: hidden;
+}
+[data-theme="dark"] .btn-primary {
+  box-shadow: 0 4px 12px rgba(212,165,116,0.2);
+}
+.btn-primary::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  width: 0; height: 0; background: rgba(255,255,255,0.2);
+  border-radius: 50%; transform: translate(-50%,-50%);
+  transition: width 0.5s ease, height 0.5s ease;
+}
+.btn-primary:active::after { width: 300px; height: 300px; }
+
+/* ========== MODAL ========== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+  display: none; align-items: flex-end; justify-content: center; z-index: 100;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--card); border-radius: 22px 22px 0 0;
+  width: 100%; max-width: 500px;
+  padding: 24px 20px 20px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  max-height: 75vh; overflow-y: auto;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.modal h3 { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+.modal .stat-row {
+  display: flex; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--border-light);
+  font-size: 14px;
+}
+.modal .stat-row .stat-label { color: var(--text2); }
+.modal .stat-row .stat-value { font-weight: 800; color: var(--text); }
+.modal .pb-section { margin-top: 14px; }
+.modal .pb-title { font-size: 13px; color: var(--text2); margin-bottom: 6px; font-weight: 600; }
+.modal .pb-row {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; font-size: 13px;
+}
+.modal .pb-row .pb-ex { color: var(--text); font-weight: 600; }
+.modal .pb-row .pb-val { font-weight: 800; color: var(--accent-text); }
+
+/* ========== TOAST ========== */
+.toast {
+  position: fixed; top: 54px; left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--text); color: var(--bg);
+  padding: 10px 22px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  z-index: 200; opacity: 0;
+  transition: all 0.3s ease; pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ========== CELEBRATE ANIMATION ========== */
+@keyframes celebratePulse {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.05); }
+  60%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+.celebrate { animation: celebratePulse 0.5s ease; }
+
+/* ========== CONFETTI ========== */
+.confetti-container {
+  position: fixed; inset: 0; pointer-events: none; z-index: 300;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute; width: 8px; height: 8px;
+  border-radius: 2px; top: -20px;
+  animation: confettiFall 1.2s ease-out forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+  text-align: center; padding: 36px 20px;
+  color: var(--text3); font-size: 14px; line-height: 1.6;
+}
+
+/* ========== TIP BOX ========== */
+.tip-box {
+  margin-top: 8px; padding: 8px 12px;
+  background: var(--orange-bg); border-radius: var(--radius-xs);
+  font-size: 12px; color: var(--orange-text); line-height: 1.5;
+}
+
+/* ========== DONE CARD (after check-in) ========== */
+.done-card {
+  text-align: center;
+  padding: 40px 20px 32px;
+  animation: fadeInUp 0.4s ease;
+}
+.done-icon {
+  font-size: 56px;
+  margin-bottom: 12px;
+}
+.done-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--green-text);
+  margin-bottom: 6px;
+}
+.done-sub {
+  font-size: 14px;
+  color: var(--text2);
+}
+
+/* ========== SECONDARY BUTTON ========== */
+.secondary-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+.secondary-btn:active {
+  transform: scale(0.97);
+  background: var(--card-hover);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 380px) {
+  .header h1 { font-size: 22px; }
+  .ov-value { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="top-row">
+    <div class="greeting">
+      <span class="wave">👋</span>
+      <span id="greetingText">下午好</span>
+    </div>
+    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="tag" id="phaseTag">Phase 1 · 能量修复</div>
+  <h1>增重打卡</h1>
+  <div class="sub" id="headerSub">每天进步一点点 💪</div>
+</div>
+
+<!-- DATE NAV -->
+<div class="date-nav">
+  <button onclick="changeDay(-1)">‹</button>
+  <div class="date-display">
+    <div class="date-main" id="dateText">--</div>
+    <div class="date-week" id="weekdayText">--</div>
+  </div>
+  <button onclick="changeDay(1)">›</button>
+  <button class="today-btn" onclick="goToday()">今天</button>
+</div>
+
+<!-- OVERVIEW: weight tracking -->
+<div class="section-label">概览</div>
+<div class="overview-grid">
+  <div class="overview-card" onclick="focusWeightInput()">
+    <div class="ov-label">⚖️ 当前体重</div>
+    <div class="ov-value" id="ovWeight">--<span class="ov-unit">kg</span></div>
+    <div class="ov-sub" id="ovWeightSub">记录今日体重 ↓</div>
+  </div>
+  <div class="overview-card">
+    <div class="ov-label">🎯 目标体重</div>
+    <div class="ov-value">55<span class="ov-unit">kg</span></div>
+    <div class="ov-sub" id="ovProgressText">加载中...</div>
+  </div>
+  <div class="overview-card">
+    <div class="ov-label">📈 本周变化</div>
+    <div class="ov-value" id="ovWeekChange">--<span class="ov-unit">kg</span></div>
+    <div class="ov-sub" id="ovWeekSub">与上周相比</div>
+  </div>
+  <div class="overview-card">
+    <div class="ov-label">✅ 训练完成率</div>
+    <div class="ov-value" id="ovRate">--<span class="ov-unit">%</span></div>
+    <div class="ov-sub" id="ovRateSub">近30天</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab on" onclick="switchTab('main',this)">🏋️ 今日</div>
+  <div class="tab" onclick="switchTab('weight',this)">⚖️ 体重</div>
+  <div class="tab" onclick="switchTab('history',this)">📊 记录</div>
+</div>
+
+<!-- TAB: MAIN (questions + meal + training) -->
+<div class="tab-content on" id="tab-main">
+  <div id="questionsArea"></div>
+  <div id="mealArea"></div>
+  <div id="statusArea"></div>
+  <div id="mainContent"></div>
+</div>
+
+<!-- TAB: WEIGHT -->
+<div class="tab-content" id="tab-weight">
+  <div class="weight-log-card" style="margin-top:12px;">
+    <div class="wl-header">
+      <div class="wl-title">记录体重</div>
+      <div class="wl-trend" id="weightTrend"></div>
+    </div>
+    <div class="weight-input-row">
+      <label>今日体重</label>
+      <input type="number" id="weightInput" step="0.1" min="30" max="200" placeholder="50.0">
+      <span class="unit">kg</span>
+      <button onclick="logWeight()">记录</button>
+    </div>
+    <div id="weightMsg" style="font-size:12px;color:var(--green-text);margin-bottom:8px;display:none;"></div>
+  </div>
+  <div class="weight-log-card">
+    <div class="wl-header">
+      <div class="wl-title">近期趋势</div>
+    </div>
+    <div class="weight-mini-chart" id="weightChart"></div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;">最近 14 天</div>
+  </div>
+  <!-- Weight history list -->
+  <div id="weightHistoryList" style="margin-top:8px;"></div>
+</div>
+
+<!-- TAB: HISTORY -->
+<div class="tab-content" id="tab-history">
+  <div style="margin-top:12px;">
+    <div class="history-card" id="historyCard"></div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <button class="btn btn-stats" onclick="showStats()">📈 统计</button>
+  <button class="btn btn-primary" id="primaryBtn" onclick="saveDay()">✅ 完成打卡</button>
+</div>
+
+<!-- STATS MODAL -->
+<div class="modal-overlay" id="statsModal" onclick="if(event.target===this)closeStats()">
+  <div class="modal" id="statsContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- CONFETTI CONTAINER -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+// ========== CONFIG ==========
+const EXERCISES = [
+  { id:'squat', name:'高脚杯深蹲',  icon:'🏋️', iconClass:'squat', setsTarget:5, repsRange:[10,15], weightKey:'squatWeight', unit:'kg', defaultWeight:12, weightNote:'总重' },
+  { id:'bench', name:'哑铃卧推',    icon:'🏋️', iconClass:'bench', setsTarget:4, repsRange:[10,15], weightKey:'benchWeight', unit:'kg', defaultWeight:12, weightNote:'总重' },
+  { id:'row',   name:'单臂哑铃划船', icon:'🏋️', iconClass:'row',   setsTarget:4, repsRange:[10,15], weightKey:'rowWeight',   unit:'kg', defaultWeight:6,  weightNote:'每侧' },
+  { id:'plank', name:'平板支撑',    icon:'⏱️', iconClass:'plank', setsTarget:3, repsRange:[30,60], weightKey:'plankDuration', unit:'秒', defaultWeight:30, isTime:true },
+];
+const ENCOURAGEMENTS = [
+  '💪 今天的你比昨天更强！',
+  '🌟 坚持就是胜利，继续加油！',
+  '🔥 每一次训练，肌肉都在悄悄生长',
+  '🎯 目标越来越近了，别停下！',
+  '✨ 今天的努力，明天会感谢自己',
+  '🏋️ 练完这轮，你离理想体型又近了一步',
+  '💡 增重没有捷径，只有坚持。你做得很好！',
+  '🌱 像种树一样，每天浇一点水，总会长大的',
+  '🚀 皮包骨变身计划，进行中！',
+  '🎉 打卡完成！好好吃饭，好好休息 💤',
+];
+
+// ========== STATE ==========
+let currentDate = getTodayStr();
+let currentData = null;
+let qWork  = null;
+let qTrain = null;
+
+// ========== THEME ==========
+function initTheme() {
+  const saved = localStorage.getItem('theme_dark');
+  if (saved === 'true') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').textContent = '☀️';
+  }
+}
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeBtn').textContent = '🌙';
+    localStorage.setItem('theme_dark', 'false');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').textContent = '☀️';
+    localStorage.setItem('theme_dark', 'true');
+  }
+}
+
+// ========== GREETING ==========
+function updateGreeting() {
+  const hour = new Date().getHours();
+  let g = '晚上好';
+  if (hour >= 5 && hour < 12) g = '早上好';
+  else if (hour >= 12 && hour < 14) g = '中午好';
+  else if (hour >= 14 && hour < 18) g = '下午好';
+  const el = document.getElementById('greetingText');
+  if (el) el.textContent = g;
+}
+updateGreeting();
+
+// ========== DATE UTILS ==========
+function getTodayStr() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getStorageKey(dateStr) { return 'zx_'+dateStr; }
+function getWeightKey(dateStr) { return 'wt_'+dateStr; }
+
+function loadData(dateStr) {
+  try { return JSON.parse(localStorage.getItem(getStorageKey(dateStr))); } catch(e) { return null; }
+}
+function saveData(dateStr, data) {
+  localStorage.setItem(getStorageKey(dateStr), JSON.stringify(data));
+}
+
+function loadWeight(dateStr) {
+  const v = localStorage.getItem(getWeightKey(dateStr));
+  return v ? parseFloat(v) : null;
+}
+function saveWeight(dateStr, kg) {
+  localStorage.setItem(getWeightKey(dateStr), kg.toString());
+}
+
+function loadQ(dateStr) {
+  try { const raw = localStorage.getItem('q_'+dateStr); if (raw) return JSON.parse(raw); } catch(e){}
+  return { work: null, train: null };
+}
+function saveQ(dateStr, work, train) {
+  localStorage.setItem('q_'+dateStr, JSON.stringify({ work, train }));
+}
+
+function getDefaultData() {
+  const exData = {};
+  EXERCISES.forEach(ex => {
+    const lw = localStorage.getItem('last_'+ex.weightKey);
+    exData[ex.id] = {
+      completedSets: [],
+      weight: lw ? Number(lw) : ex.defaultWeight,
+      reps: ex.isTime ? ex.defaultWeight : ex.repsRange[1],
+    };
+  });
+  return { exercises: exData, completed: false, date: currentDate };
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr+'T00:00:00');
+  return {
+    text: (d.getMonth()+1)+'月'+d.getDate()+'日',
+    weekday: ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()]
+  };
+}
+
+// ========== RENDER ==========
+function render() {
+  const fmt = formatDate(currentDate);
+  const elDate = document.getElementById('dateText');
+  const elWeek = document.getElementById('weekdayText');
+  if (elDate) elDate.textContent = fmt.text;
+  if (elWeek) elWeek.textContent = fmt.weekday;
+
+  currentData = loadData(currentDate);
+  if (!currentData) currentData = getDefaultData();
+
+  const q = loadQ(currentDate);
+  qWork  = q.work;
+  qTrain = q.train;
+
+  renderOverview();
+  renderQuestions();
+  renderMealPlan();
+  renderStatusAndTraining();
+  renderWeightTab();
+  renderHistoryTab();
+}
+
+function renderOverview() {
+  // Current weight
+  const w = loadWeight(currentDate);
+  const elOW = document.getElementById('ovWeight');
+  if (elOW) elOW.innerHTML = (w ? w : '--') + '<span class="ov-unit">kg</span>';
+
+  // Progress to goal (50 -> 55)
+  const startWeight = 50;
+  const goalWeight = 55;
+  if (w) {
+    const pct = Math.round(Math.min(100, Math.max(0, ((w - startWeight) / (goalWeight - startWeight)) * 100)));
+    const elSub = document.getElementById('ovWeightSub');
+    if (elSub) elSub.innerHTML = '目标进度 <b style="color:var(--accent-text)">' + pct + '%</b>';
+  }
+
+  // Week change
+  renderWeekChange();
+
+  // Completion rate
+  renderCompletionRate();
+}
+
+function renderWeekChange() {
+  const el = document.getElementById('ovWeekChange');
+  const elSub = document.getElementById('ovWeekSub');
+  if (!el) return;
+
+  // Find most recent weight from ~7 days ago and today
+  const dToday = new Date(currentDate+'T00:00:00');
+  let weekAgoWeight = null;
+  let todayWeight = loadWeight(currentDate);
+  for (let i=1;i<=10;i++) {
+    const d = new Date(dToday); d.setDate(d.getDate()-i);
+    const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const w = loadWeight(ds);
+    if (w && i>=5) { weekAgoWeight = w; break; }
+  }
+  if (todayWeight && weekAgoWeight) {
+    const diff = (todayWeight - weekAgoWeight).toFixed(1);
+    const sign = diff >= 0 ? '+' : '';
+    el.innerHTML = sign + diff + '<span class="ov-unit">kg</span>';
+    el.className = 'ov-value' + (diff >= 0 ? ' ov-trend-up' : ' ov-trend-down');
+    if (elSub) elSub.textContent = '与上周相比';
+  } else if (todayWeight) {
+    el.innerHTML = (todayWeight) + '<span class="ov-unit">kg</span>';
+    if (elSub) elSub.textContent = '记录体重查看变化';
+  } else {
+    el.innerHTML = '--<span class="ov-unit">kg</span>';
+    if (elSub) elSub.textContent = '记录体重查看变化';
+  }
+}
+
+function renderCompletionRate() {
+  const el = document.getElementById('ovRate');
+  const elSub = document.getElementById('ovRateSub');
+  if (!el) return;
+  const records = [];
+  for (let i=0;i<30;i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const q = loadQ(ds); if (!q.train) continue;
+    const data = loadData(ds); if (!data) continue;
+    records.push({ date:ds, data });
+  }
+  const completed = records.filter(r=>r.data.completed).length;
+  const total = records.length || 1;
+  const rate = Math.round((completed/total)*100);
+  el.innerHTML = rate + '<span class="ov-unit">%</span>';
+  if (elSub) elSub.textContent = '近30天 · ' + completed + '/' + total + ' 天';
+}
+
+// ========== TABS ==========
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('on'));
+  if (el) el.classList.add('on');
+  const tabEl = document.getElementById('tab-' + name);
+  if (tabEl) tabEl.classList.add('on');
+  if (name === 'weight') renderWeightTab();
+  if (name === 'history') renderHistoryTab();
+}
+
+// ========== QUESTIONS ==========
+function renderQuestions() {
+  const area = document.getElementById('questionsArea');
+  if (!area) return;
+  const q = loadQ(currentDate);
+  let html = '<div class="section-label">今日情况</div>';
+
+  html += `
+  <div class="q-card">
+    <div class="q-title">🏢 今天上班吗？</div>
+    <div class="q-btn-row">
+      <div class="q-btn ${q.work===true ? 'active-yes':''}" onclick="answerQ('work',true)">上班日</div>
+      <div class="q-btn ${q.work===false? 'active-no' :''}" onclick="answerQ('work',false)">休息日</div>
+    </div>
+  </div>`;
+
+  if (q.work !== null) {
+    html += `
+    <div class="q-card">
+      <div class="q-title">🏋️ 今天训练吗？</div>
+      <div class="q-btn-row">
+        <div class="q-btn ${q.train===true ? 'active-yes':''}" onclick="answerQ('train',true)">训练</div>
+        <div class="q-btn ${q.train===false? 'active-no' :''}" onclick="answerQ('train',false)">休息</div>
+      </div>
+    </div>`;
+  }
+  area.innerHTML = html;
+}
+
+function answerQ(type, val) {
+  const q = loadQ(currentDate);
+  if (type === 'work')  { q.work = val; if (!val) q.train = false; }
+  if (type === 'train') { q.train = val; }
+  saveQ(currentDate, q.work, q.train);
+  qWork  = q.work;
+  qTrain = q.train;
+  render();  // full re-render so questions UI, meal plan, and training all update instantly
+}
+
+// ========== MEAL PLAN ==========
+// Multiple meal plan variations for rotation
+const WORKDAY_PLANS = [
+  {
+    name: '家常饭作息版',
+    targetCal: 2300,
+    meals: [
+      { time:'07:00', label:'早餐',  food:'吐司2片+花生酱 + 香蕉1根 + 全脂牛奶1杯',       cal: 480 },
+      { time:'10:00', label:'加餐',  food:'混合坚果一小把 + 苹果1个',                     cal: 230 },
+      { time:'12:30', label:'午餐',  food:'便当：米饭 + 鸡腿肉/牛肉 + 炒蔬菜',             cal: 580 },
+      { time:'15:30', label:'加餐',  food:'酸奶1盒 + 燕麦饼干2块',                        cal: 260 },
+      { time:'19:00', label:'晚餐',  food:'大碗米饭 + 红烧肉/牛排 + 蔬菜 + 汤',          cal: 720 },
+      { time:'21:30', label:'睡前',  food:'热牛奶1杯 + 水煮蛋1个',                       cal: 190 },
+    ],
+    note: '<b>上班日：</b>晚餐是唯一规律正餐，米饭多吃半碗，菜选带肥肉的。',
+  },
+  {
+    name: '澳超快手版',
+    targetCal: 2350,
+    meals: [
+      { time:'07:00', label:'早餐',  food:'Weet-Bix 2片 + 全脂牛奶 + 香蕉1根',           cal: 450 },
+      { time:'10:00', label:'加餐',  food:'坚果一小把 + 酸奶1盒',                         cal: 240 },
+      { time:'12:30', label:'午餐',  food:'Woolworths 烤鸡卷/寿司盒 + 牛奶1盒',          cal: 600 },
+      { time:'15:30', label:'加餐',  food:'蛋白棒1根 + 水果1个',                          cal: 280 },
+      { time:'19:00', label:'晚餐',  food:'超市熟食：烤鸡/肉派 + 土豆泥 + 沙拉',          cal: 680 },
+      { time:'21:30', label:'睡前',  food:'牛奶1杯 + 吐司1片+花生酱',                    cal: 220 },
+    ],
+    note: '<b>上班日：</b>澳洲超市熟食区很方便，烤鸡、肉派都是高热量好选择。',
+  },
+  {
+    name: '外卖放纵版',
+    targetCal: 2400,
+    meals: [
+      { time:'07:30', label:'早餐',  food:'咖啡店：Flat White全脂奶 + 牛角包1个',          cal: 480 },
+      { time:'10:00', label:'加餐',  food:'香蕉1根 + 牛奶1盒',                           cal: 220 },
+      { time:'12:30', label:'午餐',  food:'外卖：盖饭/炒饭大份，多加肉加蛋',             cal: 650 },
+      { time:'15:30', label:'加餐',  food:'泡泡茶(全糖全奶) + 蛋糕1块',                  cal: 380 },
+      { time:'19:00', label:'晚餐',  food:'正餐：米饭大碗 + 排骨/鸡腿 + 蔬菜',           cal: 680 },
+      { time:'21:30', label:'睡前',  food:'牛奶燕麦1杯',                                   cal: 180 },
+    ],
+    note: '<b>上班日：</b>外卖也能增重——盖饭选大份、奶茶选全糖，别怕热量。',
+  },
+];
+const RESTDAY_PLANS = [
+  {
+    name: '家常休息版',
+    targetCal: 2500,
+    meals: [
+      { time:'12:00', label:'早午餐', food:'吐司2片+煎蛋2个+牛油果半个 + 全脂牛奶',        cal: 780 },
+      { time:'14:30', label:'加餐',   food:'水果(西瓜/哈密瓜) + 酸奶1盒',                  cal: 220 },
+      { time:'17:00', label:'练后餐', food:'蛋白粉1勺 + 香蕉2根 + 吐司2片',               cal: 460 },
+      { time:'19:00', label:'晚餐',   food:'米饭大碗 + 红烧肉/可乐鸡 + 蔬菜 + 汤',        cal: 720 },
+      { time:'22:00', label:'睡前',   food:'牛奶1杯 + 方便面1包(宵夜)',                    cal: 300 },
+    ],
+    note: '<b>休息日：</b>中午第一餐多吃点，晚上再加个夜宵，轻松凑够热量。',
+  },
+  {
+    name: '澳式Brunch版',
+    targetCal: 2550,
+    meals: [
+      { time:'12:00', label:'早午餐', food:'Big Breakfast：煎蛋2个+培根+烤豆+吐司+Flat White', cal: 900 },
+      { time:'14:30', label:'加餐',   food:'Acai Bowl / 水果沙拉 + 格兰诺拉麦片',           cal: 300 },
+      { time:'17:00', label:'练后餐', food:'蛋白粉1勺 + 香蕉2根',                          cal: 400 },
+      { time:'19:00', label:'晚餐',   food:'烤肉：羊排/牛排 + 烤土豆 + 芦笋',              cal: 650 },
+      { time:'22:00', label:'睡前',   food:'热巧克力 + 饼干2块',                            cal: 250 },
+    ],
+    note: '<b>休息日：</b>澳洲Brunch热量高，周末去Cafe吃也行，增重好帮手。',
+  },
+  {
+    name: '外卖放纵版',
+    targetCal: 2600,
+    meals: [
+      { time:'12:00', label:'早午餐', food:'外卖：盖饭/炒饭/面条，选最大份多加肉加蛋',     cal: 850 },
+      { time:'14:30', label:'加餐',   food:'泡泡茶(全糖) + 蛋挞/蛋糕1块',                  cal: 380 },
+      { time:'17:00', label:'练后餐', food:'蛋白粉1勺 + 肉包子2个',                        cal: 420 },
+      { time:'19:00', label:'晚餐',   food:'火锅/烧烤/麻辣烫：多吃肉和主食',                cal: 750 },
+      { time:'22:00', label:'睡前',   food:'牛奶1杯 + 泡面/零食',                          cal: 280 },
+    ],
+    note: '<b>休息日：</b>休息日可以放纵！外卖、火锅、奶茶全糖，增重期不用克制。',
+  },
+];
+
+
+function getMealPlanForDate(dateStr, isWorkDay, isTrainingDay) {
+  // Use date to deterministically pick a plan (same date = same plan)
+  const hash = dateStr.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const plans = isWorkDay ? WORKDAY_PLANS : RESTDAY_PLANS;
+  const plan = plans[hash % plans.length];
+
+  let trainingNote = '';
+  if (isTrainingDay) {
+    trainingNote = isWorkDay
+      ? '训练前30分钟：2根香蕉。训练后30分钟内：蛋白粉1勺 + 2片吐司+花生酱。'
+      : '训练前30分钟：2根香蕉。训练后立刻喝蛋白粉+吐司。';
+  }
+
+  return { ...plan, trainingNote };
+}
+
+function calcMealPlan(isWorkDay, isTrainingDay) {
+  return getMealPlanForDate(currentDate, isWorkDay, isTrainingDay);
+}
+
+function renderMealPlan() {
+  const area = document.getElementById('mealArea');
+  if (!area) return;
+  if (qWork === null) { area.innerHTML = ''; return; }
+
+  const plan = calcMealPlan(qWork, qTrain === true);
+  const savedCals = currentData.actualCals || 0;
+  const isExpanded = currentData.mealExpanded;
+
+  let html = '<div class="section-label">🍽️ 饮食推荐</div>';
+  html += `<div class="meal-card">
+    <div class="meal-header" onclick="toggleMealDetail()" style="cursor:pointer;">
+      <div class="meal-title">${plan.name}</div>
+      <div class="meal-cal">~${plan.target} kcal</div>
+      <span class="ex-arrow" id="mealArrow" style="margin-left:8px;transition:transform 0.2s ease;${isExpanded?'transform:rotate(180deg);':''}">▾</span>
+    </div>`;
+
+  // Always visible: target cal, actual cal, note
+  html += `<div class="cal-summary">
+    <div class="cal-box target"><span class="big">${plan.targetCal}</span>目标 kcal</div>
+    <div class="cal-box actual"><span class="big" id="actualCalDisplay">${savedCals||'--'}</span>实际 kcal</div>
+  </div>`;
+  html += `<div class="cal-input-row">
+    <span>今天大约吃了</span>
+    <input type="number" id="actualCalInput" value="${savedCals||''}" placeholder="2300" min="0" step="50">
+    <span>kcal</span>
+    <button onclick="saveActualCals()">记录</button>
+  </div>`;
+  if (plan.note) html += `<div class="meal-note">💡 ${plan.note}</div>`;
+  if (plan.trainingNote) html += `<div class="tip-box">⚡ ${plan.trainingNote}</div>`;
+
+  // Expandable meal details
+  html += `<div class="ex-detail" id="mealDetail" style="${isExpanded?'max-height:600px;':'max-height:0;'}overflow:hidden;transition:max-height 0.3s cubic-bezier(0.4,0,0.2,1);">
+    <div class="ex-detail-inner" style="padding:10px 0 4px;">`;
+  plan.meals.forEach(m => {
+    html += `<div class="meal-row">
+      <span class="m-time">${m.time}<br>${m.label}</span>
+      <span class="m-food">${m.food}</span>
+      <span class="m-cal">${m.cal}</span>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function saveActualCals() {
+  const el = document.getElementById('actualCalInput');
+  if (!el) return;
+  const val = parseInt(el.value);
+  if (isNaN(val) || val < 0) return;
+  currentData.actualCals = val;
+  saveData(currentDate, currentData);
+  const disp = document.getElementById('actualCalDisplay');
+  if (disp) disp.textContent = val;
+  showToast('已记录 ' + val + ' kcal 🍽️');
+}
+
+// ========== STATUS + TRAINING ==========
+function renderStatusAndTraining() {
+  const statusArea = document.getElementById('statusArea');
+  const mainArea   = document.getElementById('mainContent');
+  if (!statusArea || !mainArea) return;
+
+  if (qTrain === null) {
+    statusArea.innerHTML = '';
+    mainArea.innerHTML  = '';
+    return;
+  }
+
+  if (qTrain) {
+    statusArea.innerHTML = `
+      <div class="status-row">
+        <div class="badge training"><span class="big">🏋️</span>训练日</div>
+        <div class="badge rest"><span class="big">🎯</span>10-15RM</div>
+      </div>`;
+  } else {
+    statusArea.innerHTML = `
+      <div class="status-row">
+        <div class="badge rest" style="flex:1"><span class="big">😴</span>休息日</div>
+      </div>`;
+  }
+
+  if (!qTrain) {
+    const nextStr = getNextTrainingHint();
+    mainArea.innerHTML = `
+      <div class="rest-card">
+        <div class="big-emoji">😴</div>
+        <h2>休息日 · 让肌肉生长</h2>
+        <p>身体在休息时才会超量恢复。<br>记得每隔2-3小时吃点东西。</p>
+        <div class="next-hint">${nextStr}</div>
+      </div>`;
+    return;
+  }
+
+  // Training: check if already completed today
+  if (currentData && currentData.completed) {
+    const enc = ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)];
+    mainArea.innerHTML = `
+      <div class="done-card">
+        <div class="done-icon">✅</div>
+        <div class="done-title">今日已打卡</div>
+        <div class="done-enc" style="margin:12px 0 6px;font-size:15px;font-weight:700;color:var(--accent-text);line-height:1.6;">子豫，${enc}</div>
+        <div class="done-sub">辛苦了，好好休息 💪</div>
+        <button class="secondary-btn" onclick="resetToday()" style="margin-top:16px;">✏️ 去修改打卡记录</button>
+      </div>`;
+    return;
+  }
+
+  // Training: accordion cards
+  let html = '<div class="section-label">🔥 今日训练</div><div class="ex-list">';
+  EXERCISES.forEach(ex => {
+    const d = currentData.exercises[ex.id];
+    const checkedCount = d.completedSets.length;
+    const allDone = checkedCount >= ex.setsTarget;
+    const lastSetReps = d.completedSets.length > 0 ? d.completedSets[d.completedSets.length-1] : null;
+    const needUpgrade = (lastSetReps && lastSetReps > ex.repsRange[1] && allDone);
+    const isExpanded = currentData.expandedEx === ex.id;
+
+    html += `
+    <div class="ex-card ${isExpanded?'expanded':''}" id="card-${ex.id}">
+      <div class="ex-header" onclick="toggleEx('${ex.id}')">
+        <div class="ex-icon ${ex.iconClass}">${ex.icon}</div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${ex.setsTarget}组 × ${ex.repsRange[0]}-${ex.repsRange[1]}${ex.isTime?'秒':'次'}${ex.weightNote?' · '+ex.weightNote:''}</div>
+        </div>
+        <div class="ex-status ${allDone?'done':'doing'}">${allDone?'✓ 完成':'进行中'}</div>
+        <span class="ex-arrow">▾</span>
+      </div>
+      <div class="ex-detail">
+        <div class="ex-detail-inner">
+          <div class="input-row">
+            <label>重量</label>
+            <input type="number" value="${d.weight}" min="0" step="0.5" onchange="updateWeight('${ex.id}',this.value)" id="weight-${ex.id}">
+            <span class="unit">${ex.unit}</span>
+            <label style="margin-left:8px;">每组</label>
+            <input type="number" value="${d.reps}" min="1" max="99" onchange="updateReps('${ex.id}',this.value)" id="reps-${ex.id}">
+            <span class="unit">${ex.isTime?'秒':'次'}</span>
+          </div>
+          <div class="sets-row" id="sets-${ex.id}">
+            ${Array.from({length:ex.setsTarget},(_,i)=>{
+              const done = i < checkedCount;
+              return `<button class="set-btn ${done?'checked':''}" onclick="event.stopPropagation();toggleSet('${ex.id}',${i})">${done?'✓':i+1}</button>`;
+            }).join('')}
+          </div>
+          <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${(checkedCount/ex.setsTarget)*100}%"></div></div></div>
+          <div class="upgrade-hint ${needUpgrade?'show':''}" id="hint-${ex.id}">
+            ⚡ 最后一组超过${ex.repsRange[1]}${ex.isTime?'秒':'次'}！下次训练建议加重。
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `
+    <div class="warmup-card">
+      <div class="warm-icon">🧘</div>
+      <div class="warm-text">
+        <div class="warm-title">训练前热身</div>
+        <div class="warm-desc">伟大拉伸 × 2轮（左右各一次），约3分钟</div>
+      </div>
+    </div>`;
+  html += '</div>';
+  mainArea.innerHTML = html;
+}
+
+function toggleEx(exId) {
+  if (!currentData) return;
+  currentData.expandedEx = currentData.expandedEx === exId ? null : exId;
+  saveData(currentDate, currentData);
+  renderStatusAndTraining();
+}
+
+function toggleMealDetail() {
+  if (!currentData) return;
+  currentData.mealExpanded = !currentData.mealExpanded;
+  saveData(currentDate, currentData);
+  renderMealPlan();
+}
+
+function getNextTrainingHint() {
+  const d = new Date(currentDate+'T00:00:00');
+  for (let i=1;i<=4;i++) {
+    d.setDate(d.getDate()+1);
+    const dow = d.getDay();
+    if ([1,3,5].includes(dow===0?7:dow)) {
+      const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      return '下次训练：'+formatDate(ds).text+' '+formatDate(ds).weekday;
+    }
+  }
+  return '';
+}
+
+// ========== TRAINING ACTIONS ==========
+function toggleSet(exId, setIdx) {
+  if (!currentData) return;
+  const d = currentData.exercises[exId];
+  const sets = d.completedSets;
+  if (sets.includes(setIdx+1)) {
+    d.completedSets = sets.filter(s=>s<=setIdx);
+  } else {
+    if (sets.length===setIdx) d.completedSets.push(setIdx+1);
+  }
+  saveData(currentDate, currentData);
+  renderStatusAndTraining();
+}
+
+function updateWeight(exId, val) {
+  if (!currentData) return;
+  const num = parseFloat(val); if (isNaN(num)||num<0) return;
+  currentData.exercises[exId].weight = num;
+  localStorage.setItem('last_'+EXERCISES.find(e=>e.id===exId).weightKey, num);
+  saveData(currentDate, currentData);
+  renderStatusAndTraining();
+}
+
+function updateReps(exId, val) {
+  if (!currentData) return;
+  const num = parseInt(val); if (isNaN(num)||num<1) return;
+  currentData.exercises[exId].reps = num;
+  saveData(currentDate, currentData);
+}
+
+// ========== SAVE DAY (with celebration) ==========
+function saveDay() {
+  if (qTrain === null) { showToast('请先回答上方两个问题 😊'); return; }
+  if (!qTrain) { showToast('休息日好好吃饭休息 😴'); return; }
+  let allComplete = true;
+  EXERCISES.forEach(ex=>{
+    if (currentData.exercises[ex.id].completedSets.length < ex.setsTarget) allComplete = false;
+  });
+  if (!allComplete) { showToast('还有动作没做完，继续加油！'); return; }
+  currentData.completed = true;
+  saveData(currentDate, currentData);
+
+  // Upgrade hints
+  const upgrades = [];
+  EXERCISES.forEach(ex=>{
+    const d = currentData.exercises[ex.id];
+    const last = d.completedSets.length>0 ? d.reps : 0;
+    if (last > ex.repsRange[1]) upgrades.push(ex.name+' → 下次试试 '+(ex.isTime?(d.weight+5):(d.weight+1))+ex.unit);
+  });
+
+  // Celebrate!
+  celebrate();
+
+  // Refresh UI to show "今日已打卡" card
+  render();
+
+  let msg = '打卡完成！今天辛苦了 🎉';
+  if (upgrades.length>0) msg += '\n下次建议：' + upgrades.join('，');
+  showToast(msg);
+
+  // Extra encouragement after 1.5s
+  setTimeout(()=>{
+    const enc = ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)];
+    showToast(enc);
+  }, 1800);
+
+  renderStatusAndTraining();
+  renderOverview();
+}
+
+function celebrate() {
+  // Button pulse
+  const btn = document.getElementById('primaryBtn');
+  if (btn) { btn.classList.add('celebrate'); setTimeout(()=>btn.classList.remove('celebrate'), 600); }
+
+  // Confetti
+  const container = document.getElementById('confettiContainer');
+  if (!container) return;
+  const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff6bd6','#ff9f43'];
+  for (let i=0;i<40;i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random()*100 + '%';
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDelay = (Math.random()*0.4) + 's';
+    piece.style.animationDuration = (0.8 + Math.random()*0.6) + 's';
+    piece.style.width = (5+Math.random()*6) + 'px';
+    piece.style.height = (5+Math.random()*6) + 'px';
+    piece.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+    container.appendChild(piece);
+  }
+  setTimeout(()=>{ container.innerHTML = ''; }, 2000);
+}
+
+// ========== WEIGHT TAB ==========
+function renderWeightTab() {
+  // Fill input with today's logged weight
+  const w = loadWeight(currentDate);
+  const inp = document.getElementById('weightInput');
+  if (inp && w) inp.value = w;
+
+  // Trend
+  const trendEl = document.getElementById('weightTrend');
+  if (trendEl) {
+    const yesterday = new Date(currentDate+'T00:00:00'); yesterday.setDate(yesterday.getDate()-1);
+    const ys = yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+    const yw = loadWeight(ys);
+    if (w && yw) {
+      const diff = (w - yw).toFixed(1);
+      const sign = diff >= 0 ? '+' : '';
+      trendEl.innerHTML = sign + diff + ' kg';
+      trendEl.style.color = diff >= 0 ? 'var(--green-text)' : 'var(--red-text)';
+    } else if (w) {
+      trendEl.textContent = '新记录';
+      trendEl.style.color = 'var(--accent-text)';
+    } else {
+      trendEl.textContent = '';
+    }
+  }
+
+  // Mini chart: last 14 days
+  const chartEl = document.getElementById('weightChart');
+  if (chartEl) {
+    const weights = [];
+    const labels = [];
+    const d = new Date(currentDate+'T00:00:00');
+    for (let i=13;i>=0;i--) {
+      const dd = new Date(d); dd.setDate(dd.getDate()-i);
+      const ds = dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+      const ww = loadWeight(ds);
+      weights.push(ww);
+      labels.push(ds.slice(5)); // MM-DD
+    }
+    const valid = weights.filter(x=>x!==null);
+    if (valid.length === 0) {
+      chartEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;height:100%;display:flex;align-items:center;justify-content:center;">暂无体重数据<br>在上方记录体重后这里会显示趋势</div>';
+    } else {
+      const minW = Math.min(...valid) - 0.5;
+      const maxW = Math.max(...valid) + 0.5;
+      const range = maxW - minW || 1;
+      let chartHtml = '';
+      weights.forEach((ww,idx) => {
+        const h = ww ? Math.round(((ww - minW)/range)*100) : 0;
+        chartHtml += `<div class="weight-bar-wrap">
+          <div class="weight-bar" style="height:${h}%;${ww?'':'opacity:0;'}"></div>
+          <div class="weight-bar-label">${ww?ww:'--'}</div>
+        </div>`;
+      });
+      chartEl.innerHTML = chartHtml;
+    }
+  }
+
+  // History list
+  const listEl = document.getElementById('weightHistoryList');
+  if (listEl) {
+    const records = [];
+    for (let i=0;i<30;i++) {
+      const dd = new Date(); dd.setDate(dd.getDate()-i);
+      const ds = dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+      const ww = loadWeight(ds);
+      if (ww !== null) records.push({ date:ds, weight:ww });
+      if (records.length>=10) break;
+    }
+    if (records.length===0) {
+      listEl.innerHTML = '<div class="empty-state">还没有体重记录<br>在上方输入体重开始追踪 📈</div>';
+    } else {
+      let html = '<div class="section-label">记录历史</div><div class="history-card">';
+      records.forEach((r,i,a)=>{
+        const prev = i<a.length-1 ? a[i+1].weight : null;
+        const diff = prev ? (r.weight - prev).toFixed(1) : null;
+        const diffStr = diff ? (diff>=0?'+':'')+diff+'kg' : '';
+        html += `<div class="history-item">
+          <div><span style="color:var(--text2);font-size:12px;">${formatDate(r.date).text}</span></div>
+          <div style="font-weight:800;color:var(--text);">${r.weight} kg</div>
+          <div style="font-size:12px;font-weight:600;color:${diff&&diff>=0?'var(--green-text)':'var(--red-text)'};">${diffStr}</div>
+        </div>`;
+      });
+      html += '</div>';
+      listEl.innerHTML = html;
+    }
+  }
+}
+
+function focusWeightInput() {
+  switchTab('weight', null);
+  setTimeout(()=>{
+    const inp = document.getElementById('weightInput');
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function logWeight() {
+  const inp = document.getElementById('weightInput');
+  if (!inp) return;
+  const val = parseFloat(inp.value);
+  if (isNaN(val) || val < 30 || val > 200) { showToast('请输入有效体重（30-200kg）'); return; }
+  saveWeight(currentDate, val);
+  const msgEl = document.getElementById('weightMsg');
+  if (msgEl) {
+    msgEl.textContent = '✅ 已记录 ' + val + ' kg';
+    msgEl.style.display = 'block';
+    setTimeout(()=>{ msgEl.style.display = 'none'; }, 3000);
+  }
+  renderWeightTab();
+  renderOverview();
+  showToast('体重已记录：' + val + ' kg ⚖️');
+}
+
+// ========== HISTORY TAB ==========
+function renderHistoryTab() {
+  const container = document.getElementById('historyCard');
+  if (!container) return;
+  const records = [];
+  const today = new Date(currentDate+'T00:00:00');
+  for (let i=0;i<30;i++) {
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const q = loadQ(ds); if (!q.train) continue;
+    const data = loadData(ds); if (!data) continue;
+    records.push({ date:ds, data });
+    if (records.length>=8) break;
+  }
+  if (records.length===0) {
+    container.innerHTML = '<div class="empty-state">还没有训练记录<br>完成第一次打卡吧 💪</div>';
+    return;
+  }
+  let html = '';
+  records.forEach((r,i)=>{
+    const isToday = r.date===currentDate;
+    const s = r.data.exercises.squat, b = r.data.exercises.bench;
+    html += `<div class="history-item" style="${isToday?'background:var(--accent-bg);margin:0 -14px;padding:10px 14px;border-radius:12px;':''}">
+      <div><span class="hi-date">${formatDate(r.date).text} ${formatDate(r.date).weekday}</span></div>
+      <div class="hi-data">深蹲 ${s.weight}kg · 卧推 ${b.weight}kg</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// ========== STATS ==========
+function showStats() {
+  const modal  = document.getElementById('statsModal');
+  const content = document.getElementById('statsContent');
+  const allRecords = [];
+  for (let i=0;i<90;i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const q = loadQ(ds); if (!q.train) continue;
+    const data = loadData(ds); if (!data) continue;
+    allRecords.push({ date:ds, data });
+  }
+  const completedDays = allRecords.filter(r=>r.data.completed).length;
+  const totalDays = allRecords.length||1;
+  const rate = Math.round((completedDays/totalDays)*100);
+  let maxS=0, maxB=0, maxR=0, maxP=0;
+  allRecords.forEach(r=>{
+    const s=r.data.exercises.squat, b=r.data.exercises.bench, ro=r.data.exercises.row, p=r.data.exercises.plank;
+    if(s.weight>maxS)maxS=s.weight; if(b.weight>maxB)maxB=b.weight;
+    if(ro.weight>maxR)maxR=ro.weight; if(p.weight>maxP)maxP=p.weight;
+  });
+  // Weight progress
+  let weightProgress = '';
+  const firstWeight = allRecords.length>0 ? loadWeight(allRecords[allRecords.length-1].date) : null;
+  const lastWeight = loadWeight(currentDate);
+  if (firstWeight && lastWeight) {
+    weightProgress = `<div class="stat-row"><span class="stat-label">体重变化</span><span class="stat-value">${(lastWeight-firstWeight)>=0?'+':''}${(lastWeight-firstWeight).toFixed(1)} kg</span></div>`;
+  }
+
+  content.innerHTML = `
+    <h3>训练统计</h3>
+    <div class="stat-row"><span class="stat-label">训练日完成率</span><span class="stat-value">${completedDays}/${totalDays}（${rate}%）</span></div>
+    <div class="stat-row"><span class="stat-label">总训练次数</span><span class="stat-value">${completedDays} 天</span></div>
+    ${weightProgress}
+    <div class="pb-section">
+      <div class="pb-title">个人最佳重量</div>
+      <div class="pb-row"><span class="pb-ex">深蹲</span><span class="pb-val">${maxS||'--'} kg</span></div>
+      <div class="pb-row"><span class="pb-ex">卧推</span><span class="pb-val">${maxB||'--'} kg</span></div>
+      <div class="pb-row"><span class="pb-ex">划船（每侧）</span><span class="pb-val">${maxR||'--'} kg</span></div>
+      <div class="pb-row"><span class="pb-ex">平板支撑</span><span class="pb-val">${maxP||'--'} 秒</span></div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:20px;width:100%;" onclick="closeStats()">关闭</button>`;
+  modal.classList.add('show');
+}
+function closeStats(){ document.getElementById('statsModal').classList.remove('show'); }
+
+// ========== DATE NAV ==========
+function changeDay(delta) {
+  const d = new Date(currentDate+'T00:00:00'); d.setDate(d.getDate()+delta);
+  currentDate = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  currentData = null;
+  render();
+}
+
+function resetToday() {
+  if (!confirm('确定要修改今天的打卡记录吗？')) return;
+  currentData.completed = false;
+  // Reset all sets
+  exercises.forEach(ex => {
+    if (currentData.exercises[ex.id]) {
+      currentData.exercises[ex.id].completedSets = [];
+      currentData.exercises[ex.id].weight = ex.weightStart;
+      currentData.exercises[ex.id].reps = ex.repsTarget;
+    }
+  });
+  saveData(currentDate, currentData);
+  render();
+  showToast('已重置今日打卡，请重新记录 🔄');
+}
+
+function goToday() { currentDate = getTodayStr(); currentData = null; render(); showToast('已回到今天 📅'); }
+
+// ========== TOAST ==========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.classList.remove('show'), 3000);
+}
+
+// ========== INIT ==========
+initTheme();
+render();
+
+// Register Service Worker for PWA offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
