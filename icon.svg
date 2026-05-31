@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <!-- 圆角背景 -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+
+  <g transform="translate(256,310)">
+    <!-- === 杠铃 === -->
+    <!-- 杠铃杆 -->
+    <line x1="-100" y1="-130" x2="100" y2="-130" stroke="#d4a574" stroke-width="12" stroke-linecap="round"/>
+    <!-- 左杠铃片 -->
+    <rect x="-105" y="-150" width="16" height="40" rx="4" fill="#d4a574"/>
+    <rect x="-115" y="-145" width="12" height="30" rx="3" fill="#c4955e"/>
+    <!-- 右杠铃片 -->
+    <rect x="89" y="-150" width="16" height="40" rx="4" fill="#d4a574"/>
+    <rect x="103" y="-145" width="12" height="30" rx="3" fill="#c4955e"/>
+
+    <!-- === 小象身体 === -->
+    <!-- 身体（圆润椭圆） -->
+    <ellipse cx="0" cy="0" rx="65" ry="70" fill="#d4a574"/>
+    <!-- 肚皮浅色 -->
+    <ellipse cx="0" cy="10" rx="40" ry="45" fill="#e8c99b"/>
+
+    <!-- 头部 -->
+    <circle cx="0" cy="-80" r="48" fill="#d4a574"/>
+
+    <!-- 耳朵 -->
+    <!-- 左耳 -->
+    <ellipse cx="-48" cy="-85" rx="22" ry="28" fill="#c4955e"/>
+    <ellipse cx="-46" cy="-85" rx="14" ry="18" fill="#e8c99b"/>
+    <!-- 右耳 -->
+    <ellipse cx="48" cy="-85" rx="22" ry="28" fill="#c4955e"/>
+    <ellipse cx="46" cy="-85" rx="14" ry="18" fill="#e8c99b"/>
+
+    <!-- 眼睛 -->
+    <circle cx="-16" cy="-85" r="7" fill="#1a1a2e"/>
+    <circle cx="16" cy="-85" r="7" fill="#1a1a2e"/>
+    <!-- 眼睛高光 -->
+    <circle cx="-14" cy="-87" r="2.5" fill="white"/>
+    <circle cx="18" cy="-87" r="2.5" fill="white"/>
+
+    <!-- 鼻子（长鼻） -->
+    <path d="M-8,-70 Q-4,-55 0,-45 Q4,-55 8,-70" fill="#c4955e"/>
+    <!-- 鼻子卷曲 -->
+    <path d="M0,-45 Q0,-35 -6,-30 Q-12,-25 -8,-20" fill="none" stroke="#c4955e" stroke-width="6" stroke-linecap="round"/>
+    <!-- 鼻尖 -->
+    <circle cx="-8" cy="-20" r="4" fill="#e8c99b"/>
+
+    <!-- 微笑 -->
+    <path d="M-12,-68 Q0,-58 12,-68" fill="none" stroke="#c4955e" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- === 手臂（举起杠铃） === -->
+    <!-- 左臂 -->
+    <path d="M-55,-20 Q-80,-50 -95,-130" fill="none" stroke="#d4a574" stroke-width="14" stroke-linecap="round"/>
+    <!-- 右臂 -->
+    <path d="M55,-20 Q80,-50 95,-130" fill="none" stroke="#d4a574" stroke-width="14" stroke-linecap="round"/>
+
+    <!-- === 腿 === -->
+    <!-- 左腿 -->
+    <ellipse cx="-30" cy="65" rx="22" ry="16" fill="#c4955e"/>
+    <!-- 右腿 -->
+    <ellipse cx="30" cy="65" rx="22" ry="16" fill="#c4955e"/>
+
+    <!-- === 哑铃（小象脚边的小哑铃） === -->
+    <line x1="-90" y1="90" x2="-50" y2="90" stroke="#d4a574" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="-95" cy="90" r="10" fill="#c4955e"/>
+    <circle cx="-45" cy="90" r="10" fill="#c4955e"/>
+
+    <!-- === 汗滴（努力） === -->
+    <path d="M55,-110 Q60,-120 55,-125" fill="none" stroke="#e8c99b" stroke-width="3" stroke-linecap="round"/>
+    <path d="M65,-95 Q70,-105 65,-110" fill="none" stroke="#e8c99b" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- 底部文字 -->
+  <text x="256" y="455" text-anchor="middle" fill="#d4a574" font-size="44" font-weight="700" font-family="serif">增重打卡</text>
+</svg>
