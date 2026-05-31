@@ -760,12 +760,57 @@ a { color: var(--accent); text-decoration: none; }
 
 <script>
 // ========== CONFIG ==========
-const EXERCISES = [
+const START_DATE = '2026-05-30';
+const PHASE1_WEEKS = 6;
+
+// Phase 1 exercises (week 1-6)
+const EXERCISES_P1 = [
   { id:'squat', name:'高脚杯深蹲',  icon:'🏋️', iconClass:'squat', setsTarget:5, repsRange:[10,15], weightKey:'squatWeight', unit:'kg', defaultWeight:12, weightNote:'总重' },
   { id:'bench', name:'哑铃卧推',    icon:'🏋️', iconClass:'bench', setsTarget:4, repsRange:[10,15], weightKey:'benchWeight', unit:'kg', defaultWeight:12, weightNote:'总重' },
   { id:'row',   name:'单臂哑铃划船', icon:'🏋️', iconClass:'row',   setsTarget:4, repsRange:[10,15], weightKey:'rowWeight',   unit:'kg', defaultWeight:6,  weightNote:'每侧' },
   { id:'plank', name:'平板支撑',    icon:'⏱️', iconClass:'plank', setsTarget:3, repsRange:[30,60], weightKey:'plankDuration', unit:'秒', defaultWeight:30, isTime:true },
 ];
+
+// Phase 2 exercises (week 7-12): slightly heavier, fewer reps, plus variation rotations
+const EXERCISES_P2_VARIANTS = [
+  // Variant A: standard + heavier
+  [
+    { id:'squat', name:'高脚杯深蹲',  icon:'🏋️', iconClass:'squat', setsTarget:5, repsRange:[8,12], weightKey:'squatWeight', unit:'kg', defaultWeight:16, weightNote:'总重' },
+    { id:'bench', name:'哑铃卧推',    icon:'🏋️', iconClass:'bench', setsTarget:4, repsRange:[8,12], weightKey:'benchWeight', unit:'kg', defaultWeight:16, weightNote:'总重' },
+    { id:'row',   name:'单臂哑铃划船', icon:'🏋️', iconClass:'row',   setsTarget:4, repsRange:[8,12], weightKey:'rowWeight',   unit:'kg', defaultWeight:8,  weightNote:'每侧' },
+    { id:'plank', name:'平板支撑',    icon:'⏱️', iconClass:'plank', setsTarget:3, repsRange:[45,75], weightKey:'plankDuration', unit:'秒', defaultWeight:45, isTime:true },
+  ],
+  // Variant B: split squat replaces goblet squat
+  [
+    { id:'squat', name:'哑铃分腿蹲',  icon:'🏋️', iconClass:'squat', setsTarget:4, repsRange:[8,12], weightKey:'squatWeight', unit:'kg', defaultWeight:12, weightNote:'每侧手' },
+    { id:'bench', name:'哑铃卧推',    icon:'🏋️', iconClass:'bench', setsTarget:4, repsRange:[8,12], weightKey:'benchWeight', unit:'kg', defaultWeight:16, weightNote:'总重' },
+    { id:'row',   name:'单臂哑铃划船', icon:'🏋️', iconClass:'row',   setsTarget:4, repsRange:[8,12], weightKey:'rowWeight',   unit:'kg', defaultWeight:8,  weightNote:'每侧' },
+    { id:'plank', name:'侧平板支撑',  icon:'⏱️', iconClass:'plank', setsTarget:3, repsRange:[20,40], weightKey:'plankDuration', unit:'秒', defaultWeight:20, isTime:true },
+  ],
+];
+
+function getPhaseInfo(dateStr) {
+  const start = new Date(START_DATE+'T00:00:00');
+  const current = new Date(dateStr+'T00:00:00');
+  const diffDays = Math.floor((current - start) / (1000*60*60*24));
+  const weekNum = Math.floor(diffDays / 7) + 1;
+  if (weekNum <= PHASE1_WEEKS) {
+    return { phase:1, week:weekNum, label:'Phase 1 · 能量修复' };
+  } else {
+    return { phase:2, week:weekNum, label:'Phase 2 · 渐进增肌' };
+  }
+}
+
+function getExercisesForDate(dateStr) {
+  const info = getPhaseInfo(dateStr);
+  if (info.phase === 1) return EXERCISES_P1;
+  // Phase 2: alternate between variants every 2 weeks
+  const variantIdx = Math.floor((info.week - PHASE1_WEEKS - 1) / 2) % EXERCISES_P2_VARIANTS.length;
+  return EXERCISES_P2_VARIANTS[variantIdx];
+}
+
+// Alias for current date (used in many places)
+let EXERCISES = EXERCISES_P1;
 const ENCOURAGEMENTS = [
   '💪 今天的你比昨天更强！',
   '🌟 坚持就是胜利，继续加油！',
@@ -851,7 +896,8 @@ function saveQ(dateStr, work, train) {
 
 function getDefaultData() {
   const exData = {};
-  EXERCISES.forEach(ex => {
+  const exs = getExercisesForDate(currentDate);
+  exs.forEach(ex => {
     const lw = localStorage.getItem('last_'+ex.weightKey);
     exData[ex.id] = {
       completedSets: [],
@@ -872,6 +918,12 @@ function formatDate(dateStr) {
 
 // ========== RENDER ==========
 function render() {
+  // Update exercises based on current date's phase
+  EXERCISES = getExercisesForDate(currentDate);
+  const phaseInfo = getPhaseInfo(currentDate);
+  const tagEl = document.getElementById('phaseTag');
+  if (tagEl) tagEl.textContent = phaseInfo.label + ' · 第' + phaseInfo.week + '周';
+
   const fmt = formatDate(currentDate);
   const elDate = document.getElementById('dateText');
   const elWeek = document.getElementById('weekdayText');
@@ -1135,16 +1187,15 @@ function renderMealPlan() {
     </div>`;
 
   // Always visible: target cal, actual cal, note
-  html += `<div class="cal-summary">
-    <div class="cal-box target"><span class="big">${plan.targetCal}</span>目标 kcal</div>
-    <div class="cal-box actual"><span class="big" id="actualCalDisplay">${savedCals||'--'}</span>实际 kcal</div>
-  </div>`;
   html += `<div class="cal-input-row">
     <span>今天大约吃了</span>
     <input type="number" id="actualCalInput" value="${savedCals||''}" placeholder="2300" min="0" step="50">
     <span>kcal</span>
     <button onclick="saveActualCals()">记录</button>
   </div>`;
+  if (savedCals) {
+    html += `<div style="font-size:13px;font-weight:700;color:var(--green-text);margin-top:6px;text-align:center;">已记录 ${savedCals} kcal</div>`;
+  }
   if (plan.note) html += `<div class="meal-note">💡 ${plan.note}</div>`;
   if (plan.trainingNote) html += `<div class="tip-box">⚡ ${plan.trainingNote}</div>`;
 
@@ -1171,8 +1222,7 @@ function saveActualCals() {
   if (isNaN(val) || val < 0) return;
   currentData.actualCals = val;
   saveData(currentDate, currentData);
-  const disp = document.getElementById('actualCalDisplay');
-  if (disp) disp.textContent = val;
+  renderMealPlan();
   showToast('已记录 ' + val + ' kcal 🍽️');
 }
 
@@ -1222,7 +1272,10 @@ function renderStatusAndTraining() {
         <div class="done-title">今日已打卡</div>
         <div class="done-enc" style="margin:12px 0 6px;font-size:15px;font-weight:700;color:var(--accent-text);line-height:1.6;">子豫，${enc}</div>
         <div class="done-sub">辛苦了，好好休息 💪</div>
-        <button class="secondary-btn" onclick="resetToday()" style="margin-top:16px;">✏️ 去修改打卡记录</button>
+        <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="secondary-btn" onclick="resetToday()">✏️ 修改记录</button>
+          <button class="secondary-btn" onclick="deleteTodayRecord()" style="border-color:var(--red);color:var(--red-text);">🗑️ 删除记录</button>
+        </div>
       </div>`;
     return;
   }
@@ -1346,26 +1399,25 @@ function updateReps(exId, val) {
 function saveDay() {
   if (qTrain === null) { showToast('请先回答上方两个问题 😊'); return; }
   if (!qTrain) { showToast('休息日好好吃饭休息 😴'); return; }
-  let allComplete = true;
-  EXERCISES.forEach(ex=>{
-    if (currentData.exercises[ex.id].completedSets.length < ex.setsTarget) allComplete = false;
-  });
-  if (!allComplete) { showToast('还有动作没做完，继续加油！'); return; }
+
   currentData.completed = true;
   saveData(currentDate, currentData);
 
-  // Upgrade hints
+  // Check if any exercises were actually filled in for upgrade hints
   const upgrades = [];
   EXERCISES.forEach(ex=>{
     const d = currentData.exercises[ex.id];
-    const last = d.completedSets.length>0 ? d.reps : 0;
-    if (last > ex.repsRange[1]) upgrades.push(ex.name+' → 下次试试 '+(ex.isTime?(d.weight+5):(d.weight+1))+ex.unit);
+    if (!d) return;
+    const lastRep = d.completedSets.length>0 ? d.reps : 0;
+    if (lastRep > ex.repsRange[1]) {
+      upgrades.push(ex.name+' → 下次试试 '+(ex.isTime?(d.weight+5):(d.weight+1))+ex.unit);
+    }
   });
 
   // Celebrate!
   celebrate();
 
-  // Refresh UI to show "今日已打卡" card
+  // Refresh UI to show "今日已打卡" card with encouragement
   render();
 
   let msg = '打卡完成！今天辛苦了 🎉';
@@ -1545,6 +1597,10 @@ function renderHistoryTab() {
     html += `<div class="history-item" style="${isToday?'background:var(--accent-bg);margin:0 -14px;padding:10px 14px;border-radius:12px;':''}">
       <div><span class="hi-date">${formatDate(r.date).text} ${formatDate(r.date).weekday}</span></div>
       <div class="hi-data">深蹲 ${s.weight}kg · 卧推 ${b.weight}kg</div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="goEditRecord('${r.date}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 6px;" title="修改">✏️</button>
+        <button onclick="deleteRecord('${r.date}')" style="background:none;border:none;font-size:14px;cursor:pointer;padding:2px 6px;" title="删除">🗑️</button>
+      </div>
     </div>`;
   });
   container.innerHTML = html;
@@ -1608,11 +1664,11 @@ function resetToday() {
   if (!confirm('确定要修改今天的打卡记录吗？')) return;
   currentData.completed = false;
   // Reset all sets
-  exercises.forEach(ex => {
+  EXERCISES.forEach(ex => {
     if (currentData.exercises[ex.id]) {
       currentData.exercises[ex.id].completedSets = [];
-      currentData.exercises[ex.id].weight = ex.weightStart;
-      currentData.exercises[ex.id].reps = ex.repsTarget;
+      currentData.exercises[ex.id].weight = ex.defaultWeight;
+      currentData.exercises[ex.id].reps = ex.repsRange[1];
     }
   });
   saveData(currentDate, currentData);
@@ -1620,7 +1676,39 @@ function resetToday() {
   showToast('已重置今日打卡，请重新记录 🔄');
 }
 
+function deleteTodayRecord() {
+  if (!confirm('确定要删除今天的打卡记录吗？此操作不可撤销。')) return;
+  localStorage.removeItem(getStorageKey(currentDate));
+  localStorage.removeItem('q_'+currentDate);
+  currentData = getDefaultData();
+  const q = loadQ(currentDate);
+  qWork = q.work; qTrain = q.train;
+  render();
+  showToast('已删除今日记录 🗑️');
+}
+
 function goToday() { currentDate = getTodayStr(); currentData = null; render(); showToast('已回到今天 📅'); }
+
+function goEditRecord(dateStr) {
+  currentDate = dateStr;
+  currentData = null;
+  render();
+  switchTab('main', document.querySelectorAll('.tab')[0]);
+  showToast('正在编辑 ' + formatDate(dateStr).text + ' 的记录 ✏️');
+}
+
+function deleteRecord(dateStr) {
+  if (!confirm('确定删除 ' + formatDate(dateStr).text + ' 的打卡记录吗？此操作不可撤销。')) return;
+  localStorage.removeItem(getStorageKey(dateStr));
+  localStorage.removeItem('q_'+dateStr);
+  if (dateStr === currentDate) {
+    currentData = getDefaultData();
+    const q = loadQ(currentDate);
+    qWork = q.work; qTrain = q.train;
+  }
+  render();
+  showToast('已删除 ' + formatDate(dateStr).text + ' 的记录 🗑️');
+}
 
 // ========== TOAST ==========
 function showToast(msg) {
