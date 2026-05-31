@@ -1019,8 +1019,7 @@ function toggleEye(card) {
   const btn = document.getElementById('eye-' + card);
   if (btn) btn.innerHTML = eyeStates[card] ? EYE_CLOSE : EYE_OPEN;
 
-  // Re-apply with fresh cache
-  applyEyeStates._cached = {};
+  // Re-apply eye states using existing cache (values cached by renderOverview)
   applyEyeStates();
 }
 
