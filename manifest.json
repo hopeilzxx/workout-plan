@@ -2,7 +2,7 @@
   "name": "增重打卡",
   "short_name": "增重打卡",
   "description": "皮包骨增重训练打卡",
-  "start_url": ".",
+  "start_url": "training-tracker.html",
   "display": "standalone",
   "background_color": "#1a1a1c",
   "theme_color": "#1a1a2e",
