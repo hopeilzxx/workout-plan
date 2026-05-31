@@ -989,7 +989,17 @@ function render() {
   qTrain = q.train;
 
   renderOverview();
-  renderQuestions();
+  // After check-in: hide questions area and primary button, show done card
+  const completed = currentData && currentData.completed;
+  const qArea = document.getElementById('questionsArea');
+  const btn   = document.getElementById('primaryBtn');
+  if (completed) {
+    if (qArea) qArea.innerHTML = '';
+    if (btn) btn.style.display = 'none';
+  } else {
+    renderQuestions();
+    if (btn) btn.style.display = '';
+  }
   renderMealPlan();
   renderStatusAndTraining();
   renderWeightTab();
@@ -1320,7 +1330,7 @@ function renderMealPlan() {
   html += `<div class="meal-card">
     <div class="meal-header" onclick="toggleMealDetail()" style="cursor:pointer;">
       <div class="meal-title">${plan.name}</div>
-      <div class="meal-cal">~${plan.target} kcal</div>
+      <div class="meal-cal">~${plan.targetCal} kcal</div>
       <span class="ex-arrow" id="mealArrow" style="margin-left:8px;transition:transform 0.2s ease;${isExpanded?'transform:rotate(180deg);':''}">▾</span>
     </div>`;
 
@@ -1562,6 +1572,12 @@ function saveDay() {
     celebrate();
     render();
 
+    // Scroll to done card after render
+    setTimeout(() => {
+      const doneCard = document.querySelector('.done-card');
+      if (doneCard) doneCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+
     const enc = REST_ENCOURAGEMENTS[Math.floor(Math.random()*REST_ENCOURAGEMENTS.length)];
     showToast('打卡完成！' + enc);
 
@@ -1569,9 +1585,6 @@ function saveDay() {
       const enc2 = REST_ENCOURAGEMENTS[Math.floor(Math.random()*REST_ENCOURAGEMENTS.length)];
       showToast(enc2);
     }, 1800);
-
-    renderStatusAndTraining();
-    renderOverview();
     return;
   }
 
@@ -1591,11 +1604,16 @@ function saveDay() {
     }
   });
 
-  // Celebrate!
   celebrate();
 
   // Refresh UI to show "今日已打卡" card with encouragement
   render();
+
+  // Scroll to done card
+  setTimeout(() => {
+    const doneCard = document.querySelector('.done-card');
+    if (doneCard) doneCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 
   let msg = '打卡完成！今天辛苦了 🎉';
   if (upgrades.length>0) msg += '\n下次建议：' + upgrades.join('，');
@@ -1606,9 +1624,6 @@ function saveDay() {
     const enc = ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)];
     showToast(enc);
   }, 1800);
-
-  renderStatusAndTraining();
-  renderOverview();
 }
 
 function celebrate() {
