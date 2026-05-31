@@ -653,6 +653,57 @@ a { color: var(--accent); text-decoration: none; }
   background: var(--card-hover);
 }
 
+/* ========== SETTINGS PANEL ========== */
+.settings-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card); color: var(--text2);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm); transition: all 0.15s;
+}
+.settings-toggle:active { transform: scale(0.92); }
+.settings-panel {
+  display: none; background: var(--card); border-radius: var(--radius-sm);
+  padding: 16px; margin-bottom: 8px; box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+.settings-panel.show { display: block; }
+.settings-panel .set-title {
+  font-size: 14px; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.settings-panel .set-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  font-size: 13px; color: var(--text2);
+}
+.settings-panel .set-row label { min-width: 70px; font-weight: 600; }
+.settings-panel .set-row input, .settings-panel .set-row select {
+  flex: 1; padding: 8px 10px; border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border); background: var(--bg);
+  color: var(--text); font-size: 13px; font-family: var(--font);
+}
+.settings-panel .set-row input:focus, .settings-panel .set-row select:focus {
+  outline: none; border-color: var(--accent);
+}
+.settings-panel .set-hint {
+  font-size: 11px; color: var(--text3); margin: 4px 0 10px;
+}
+.settings-panel .set-save {
+  display: block; width: 100%; padding: 10px; border-radius: var(--radius-xs);
+  border: none; background: var(--accent); color: #fff;
+  font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font);
+  transition: all 0.12s;
+}
+.settings-panel .set-save:active { transform: scale(0.97); opacity: 0.85; }
+
+/* ========== WEIGHT CHART (Canvas) ========== */
+.weight-chart-wrap {
+  background: var(--card); border-radius: var(--radius-sm);
+  padding: 12px; box-shadow: var(--shadow-sm); margin-bottom: 8px;
+}
+.weight-chart-wrap canvas { display: block; width: 100%; height: 180px; }
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 380px) {
   .header h1 { font-size: 22px; }
@@ -669,11 +720,39 @@ a { color: var(--accent); text-decoration: none; }
       <span class="wave">👋</span>
       <span id="greetingText">下午好</span>
     </div>
-    <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="settings-toggle" id="settingsBtn" onclick="toggleSettings()" title="设置">⚙️</button>
+      <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    </div>
   </div>
   <div class="tag" id="phaseTag">Phase 1 · 能量修复</div>
   <h1>增重打卡</h1>
   <div class="sub" id="headerSub">每天进步一点点 💪</div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="set-title">⚙️ 个人设置</div>
+  <div class="set-row">
+    <label>目标体重</label>
+    <input type="number" id="setGoalWeight" step="0.1" min="40" max="100" placeholder="63">
+    <span style="font-size:12px;color:var(--text3)">kg</span>
+  </div>
+  <div class="set-row">
+    <label>起始体重</label>
+    <input type="number" id="setStartWeight" step="0.1" min="30" max="100" placeholder="50">
+    <span style="font-size:12px;color:var(--text3)">kg</span>
+  </div>
+  <div class="set-row">
+    <label>当前阶段</label>
+    <select id="setPhase">
+      <option value="1">Phase 1 · 训练重建（10-15RM）</option>
+      <option value="2">Phase 2 · 增肌增重（8-12RM）</option>
+      <option value="3">Phase 3 · 薄肌雕刻（维持+有氧）</option>
+    </select>
+  </div>
+  <div class="set-hint" id="setHint">💡 阶段建议：体重 < 目标-3kg → Phase 2；接近目标 → Phase 3</div>
+  <button class="set-save" onclick="saveSettings()">保存设置</button>
 </div>
 
 <!-- DATE NAV -->
@@ -754,12 +833,9 @@ a { color: var(--accent); text-decoration: none; }
     </div>
     <div id="weightMsg" style="font-size:12px;color:var(--green-text);margin-bottom:8px;display:none;"></div>
   </div>
-  <div class="weight-log-card">
-    <div class="wl-header">
-      <div class="wl-title">近期趋势</div>
-    </div>
-    <div class="weight-mini-chart" id="weightChart"></div>
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;">最近 14 天</div>
+  <div class="weight-chart-wrap">
+    <canvas id="weightCanvas" height="180"></canvas>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:4px;">最近 14 天</div>
   </div>
   <!-- Weight history list -->
   <div id="weightHistoryList" style="margin-top:8px;"></div>
@@ -793,6 +869,27 @@ a { color: var(--accent); text-decoration: none; }
 // ========== CONFIG ==========
 const START_DATE = '2026-05-30';
 const PHASE1_WEEKS = 6;
+const PHASE2_WEEKS = 8; // Phase 2 lasts 8 weeks (week 7-14)
+const STORAGE_KEY_SETTINGS = 'user_settings';
+const STORAGE_KEY_WEIGHT_HISTORY = 'weight_history';
+
+// Default user settings (will be overridden by localStorage)
+let userSettings = {
+  goalWeight: 63,
+  startWeight: 50,
+  manualPhase: null  // null = auto; 1/2/3 = manual override
+};
+
+function loadSettings() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY_SETTINGS);
+    if (s) userSettings = JSON.parse(s);
+  } catch(e) {}
+}
+function saveUserSettings() {
+  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(userSettings));
+}
+loadSettings();
 
 // Phase 1 exercises (week 1-6)
 const EXERCISES_P1 = [
@@ -820,21 +917,39 @@ const EXERCISES_P2_VARIANTS = [
   ],
 ];
 
+// Phase 3 exercises (week 15+): maintain strength + add cardio hints
+const EXERCISES_P3 = [
+  { id:'squat', name:'杠铃/哑铃深蹲',  icon:'🏋️', iconClass:'squat', setsTarget:4, repsRange:[8,12], weightKey:'squatWeight', unit:'kg', defaultWeight:20, weightNote:'总重' },
+  { id:'bench', name:'哑铃/杠铃卧推',    icon:'🏋️', iconClass:'bench', setsTarget:4, repsRange:[8,12], weightKey:'benchWeight', unit:'kg', defaultWeight:20, weightNote:'总重' },
+  { id:'row',   name:'单臂哑铃划船', icon:'🏋️', iconClass:'row',   setsTarget:4, repsRange:[8,12], weightKey:'rowWeight',   unit:'kg', defaultWeight:10, weightNote:'每侧' },
+  { id:'plank', name:'平板支撑',    icon:'⏱️', iconClass:'plank', setsTarget:3, repsRange:[45,75], weightKey:'plankDuration', unit:'秒', defaultWeight:45, isTime:true },
+];
+
 function getPhaseInfo(dateStr) {
+  // Manual override takes priority
+  if (userSettings.manualPhase !== null) {
+    const p = userSettings.manualPhase;
+    const labels = { 1:'Phase 1 · 训练重建', 2:'Phase 2 · 增肌增重', 3:'Phase 3 · 薄肌雕刻' };
+    return { phase:p, week:0, label:labels[p] || labels[1] };
+  }
+  // Auto-detect from date
   const start = new Date(START_DATE+'T00:00:00');
   const current = new Date(dateStr+'T00:00:00');
   const diffDays = Math.floor((current - start) / (1000*60*60*24));
   const weekNum = Math.floor(diffDays / 7) + 1;
   if (weekNum <= PHASE1_WEEKS) {
-    return { phase:1, week:weekNum, label:'Phase 1 · 能量修复' };
+    return { phase:1, week:weekNum, label:'Phase 1 · 训练重建' };
+  } else if (weekNum <= PHASE1_WEEKS + PHASE2_WEEKS) {
+    return { phase:2, week:weekNum, label:'Phase 2 · 增肌增重' };
   } else {
-    return { phase:2, week:weekNum, label:'Phase 2 · 渐进增肌' };
+    return { phase:3, week:weekNum, label:'Phase 3 · 薄肌雕刻' };
   }
 }
 
 function getExercisesForDate(dateStr) {
   const info = getPhaseInfo(dateStr);
   if (info.phase === 1) return EXERCISES_P1;
+  if (info.phase === 3) return EXERCISES_P3;
   // Phase 2: alternate between variants every 2 weeks
   const variantIdx = Math.floor((info.week - PHASE1_WEEKS - 1) / 2) % EXERCISES_P2_VARIANTS.length;
   return EXERCISES_P2_VARIANTS[variantIdx];
@@ -880,6 +995,53 @@ function loadEyeStates() {
 function saveEyeStates() {
   localStorage.setItem('eye_states', JSON.stringify(eyeStates));
 }
+
+// ========== SETTINGS ==========
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  if (!panel) return;
+  const show = !panel.classList.contains('show');
+  panel.classList.toggle('show');
+  if (show) {
+    document.getElementById('setGoalWeight').value = userSettings.goalWeight;
+    document.getElementById('setStartWeight').value = userSettings.startWeight;
+    document.getElementById('setPhase').value = userSettings.manualPhase || '';
+    // Auto-hint
+    updateSetHint();
+  }
+}
+
+function updateSetHint() {
+  const hint = document.getElementById('setHint');
+  if (!hint) return;
+  const w = loadWeight(currentDate);
+  if (!w) { hint.textContent = '💡 请先记录体重，系统可自动推荐阶段'; return; }
+  const gw = userSettings.goalWeight;
+  if (w < gw - 3) hint.textContent = '💡 当前体重 ' + w + 'kg < 目标 ' + gw + 'kg，建议选 Phase 2（增肌增重）';
+  else if (w >= gw - 1) hint.textContent = '💡 当前体重 ' + w + 'kg 接近目标 ' + gw + 'kg，可考虑 Phase 3（薄肌雕刻）';
+  else hint.textContent = '💡 当前体重 ' + w + 'kg，可继续增重或开始雕刻';
+}
+
+function saveSettings() {
+  const gw = parseFloat(document.getElementById('setGoalWeight').value);
+  const sw = parseFloat(document.getElementById('setStartWeight').value);
+  const mp = document.getElementById('setPhase').value;
+  if (isNaN(gw) || gw < 40 || gw > 100) { showToast('目标体重需在 40-100kg 之间'); return; }
+  if (isNaN(sw) || sw < 30 || sw > 100) { showToast('起始体重需在 30-100kg 之间'); return; }
+  userSettings.goalWeight = gw;
+  userSettings.startWeight = sw;
+  userSettings.manualPhase = mp ? parseInt(mp) : null;
+  saveUserSettings();
+  toggleSettings();
+  render();
+  showToast('设置已保存 ✅');
+}
+
+// Hook phase selector change to update hint
+document.addEventListener('DOMContentLoaded', function() {
+  const sel = document.getElementById('setPhase');
+  if (sel) sel.addEventListener('change', updateSetHint);
+});
 
 // ========== THEME ==========
 function initTheme() {
@@ -973,13 +1135,29 @@ function render() {
   EXERCISES = getExercisesForDate(currentDate);
   const phaseInfo = getPhaseInfo(currentDate);
   const tagEl = document.getElementById('phaseTag');
-  if (tagEl) tagEl.textContent = phaseInfo.label + ' · 第' + phaseInfo.week + '周';
+  if (tagEl) {
+    if (phaseInfo.week > 0) {
+      tagEl.textContent = phaseInfo.label + ' · 第' + phaseInfo.week + '周';
+    } else {
+      tagEl.textContent = phaseInfo.label;
+    }
+  }
 
   const fmt = formatDate(currentDate);
   const elDate = document.getElementById('dateText');
   const elWeek = document.getElementById('weekdayText');
   if (elDate) elDate.textContent = fmt.text;
   if (elWeek) elWeek.textContent = fmt.weekday;
+
+  // Update header sub with dynamic goal info
+  const elSub = document.getElementById('headerSub');
+  if (elSub) {
+    const w = loadWeight(currentDate);
+    const gw = userSettings.goalWeight;
+    if (w && w >= gw) elSub.textContent = '🎉 已达成目标 ' + gw + 'kg！进入雕刻阶段';
+    else if (w) elSub.textContent = '当前 ' + w + 'kg → 目标 ' + gw + 'kg · 每天进步一点点 💪';
+    else elSub.textContent = '目标 ' + gw + 'kg · 每天进步一点点 💪';
+  }
 
   currentData = loadData(currentDate);
   if (!currentData) currentData = getDefaultData();
@@ -1082,23 +1260,26 @@ function applyEyeStates() {
 }
 
 function renderOverview() {
-  // Render data first (always show real values)
   // Current weight
   const w = loadWeight(currentDate);
   const elOW = document.getElementById('ovWeight');
   if (elOW) elOW.innerHTML = (w ? w : '--') + '<span class="ov-unit">kg</span>';
 
-  // Progress to goal (50 -> 55)
-  const startWeight = 50;
-  const goalWeight = 55;
+  // Goal weight card
+  const goalW = userSettings.goalWeight;
+  const elGoal = document.getElementById('ovGoal');
+  if (elGoal) elGoal.innerHTML = goalW + '<span class="ov-unit">kg</span>';
+
+  // Progress to goal
+  const startW = userSettings.startWeight;
   const elProgress = document.getElementById('ovProgressText');
   if (w) {
-    const pct = Math.round(Math.min(100, Math.max(0, ((w - startWeight) / (goalWeight - startWeight)) * 100)));
+    const pct = Math.round(Math.min(100, Math.max(0, ((w - startW) / (goalW - startW)) * 100)));
     const elSub = document.getElementById('ovWeightSub');
     if (elSub) elSub.innerHTML = '目标进度 <b style="color:var(--accent-text)">' + pct + '%</b>';
-    if (elProgress) elProgress.textContent = '距目标还有 ' + (goalWeight - w).toFixed(1) + ' kg';
+    if (elProgress) elProgress.textContent = '距目标还有 ' + Math.max(0, goalW - w).toFixed(1) + ' kg';
   } else {
-    if (elProgress) elProgress.textContent = '目标 55kg · 需增 5kg';
+    if (elProgress) elProgress.textContent = '目标 ' + goalW + 'kg · 需增 ' + (goalW - startW).toFixed(1) + 'kg';
   }
 
   // Week change
@@ -1215,105 +1396,83 @@ function answerQ(type, val) {
 
 // ========== MEAL PLAN ==========
 // Multiple meal plan variations for rotation
-const WORKDAY_PLANS = [
-  {
-    name: '家常饭作息版',
-    targetCal: 2300,
-    meals: [
-      { time:'07:00', label:'早餐',  food:'吐司2片+花生酱 + 香蕉1根 + 全脂牛奶1杯',       cal: 480 },
-      { time:'10:00', label:'加餐',  food:'混合坚果一小把 + 苹果1个',                     cal: 230 },
-      { time:'12:30', label:'午餐',  food:'便当：米饭 + 鸡腿肉/牛肉 + 炒蔬菜',             cal: 580 },
-      { time:'15:30', label:'加餐',  food:'酸奶1盒 + 燕麦饼干2块',                        cal: 260 },
-      { time:'19:00', label:'晚餐',  food:'大碗米饭 + 红烧肉/牛排 + 蔬菜 + 汤',          cal: 720 },
-      { time:'21:30', label:'睡前',  food:'热牛奶1杯 + 水煮蛋1个',                       cal: 190 },
-    ],
-    note: '<b>上班日：</b>晚餐是唯一规律正餐，米饭多吃半碗，菜选带肥肉的。',
-  },
-  {
-    name: '澳超快手版',
-    targetCal: 2350,
-    meals: [
-      { time:'07:00', label:'早餐',  food:'Weet-Bix 2片 + 全脂牛奶 + 香蕉1根',           cal: 450 },
-      { time:'10:00', label:'加餐',  food:'坚果一小把 + 酸奶1盒',                         cal: 240 },
-      { time:'12:30', label:'午餐',  food:'Woolworths 烤鸡卷/寿司盒 + 牛奶1盒',          cal: 600 },
-      { time:'15:30', label:'加餐',  food:'蛋白棒1根 + 水果1个',                          cal: 280 },
-      { time:'19:00', label:'晚餐',  food:'超市熟食：烤鸡/肉派 + 土豆泥 + 沙拉',          cal: 680 },
-      { time:'21:30', label:'睡前',  food:'牛奶1杯 + 吐司1片+花生酱',                    cal: 220 },
-    ],
-    note: '<b>上班日：</b>澳洲超市熟食区很方便，烤鸡、肉派都是高热量好选择。',
-  },
-  {
-    name: '外卖放纵版',
-    targetCal: 2400,
-    meals: [
-      { time:'07:30', label:'早餐',  food:'咖啡店：Flat White全脂奶 + 牛角包1个',          cal: 480 },
-      { time:'10:00', label:'加餐',  food:'香蕉1根 + 牛奶1盒',                           cal: 220 },
-      { time:'12:30', label:'午餐',  food:'外卖：盖饭/炒饭大份，多加肉加蛋',             cal: 650 },
-      { time:'15:30', label:'加餐',  food:'泡泡茶(全糖全奶) + 蛋糕1块',                  cal: 380 },
-      { time:'19:00', label:'晚餐',  food:'正餐：米饭大碗 + 排骨/鸡腿 + 蔬菜',           cal: 680 },
-      { time:'21:30', label:'睡前',  food:'牛奶燕麦1杯',                                   cal: 180 },
-    ],
-    note: '<b>上班日：</b>外卖也能增重——盖饭选大份、奶茶选全糖，别怕热量。',
-  },
-];
-const RESTDAY_PLANS = [
-  {
-    name: '家常休息版',
-    targetCal: 2500,
-    meals: [
-      { time:'12:00', label:'早午餐', food:'吐司2片+煎蛋2个+牛油果半个 + 全脂牛奶',        cal: 780 },
-      { time:'14:30', label:'加餐',   food:'水果(西瓜/哈密瓜) + 酸奶1盒',                  cal: 220 },
-      { time:'17:00', label:'练后餐', food:'蛋白粉1勺 + 香蕉2根 + 吐司2片',               cal: 460 },
-      { time:'19:00', label:'晚餐',   food:'米饭大碗 + 红烧肉/可乐鸡 + 蔬菜 + 汤',        cal: 720 },
-      { time:'22:00', label:'睡前',   food:'牛奶1杯 + 方便面1包(宵夜)',                    cal: 300 },
-    ],
-    note: '<b>休息日：</b>中午第一餐多吃点，晚上再加个夜宵，轻松凑够热量。',
-  },
-  {
-    name: '澳式Brunch版',
-    targetCal: 2550,
-    meals: [
-      { time:'12:00', label:'早午餐', food:'Big Breakfast：煎蛋2个+培根+烤豆+吐司+Flat White', cal: 900 },
-      { time:'14:30', label:'加餐',   food:'Acai Bowl / 水果沙拉 + 格兰诺拉麦片',           cal: 300 },
-      { time:'17:00', label:'练后餐', food:'蛋白粉1勺 + 香蕉2根',                          cal: 400 },
-      { time:'19:00', label:'晚餐',   food:'烤肉：羊排/牛排 + 烤土豆 + 芦笋',              cal: 650 },
-      { time:'22:00', label:'睡前',   food:'热巧克力 + 饼干2块',                            cal: 250 },
-    ],
-    note: '<b>休息日：</b>澳洲Brunch热量高，周末去Cafe吃也行，增重好帮手。',
-  },
-  {
-    name: '外卖放纵版',
-    targetCal: 2600,
-    meals: [
-      { time:'12:00', label:'早午餐', food:'外卖：盖饭/炒饭/面条，选最大份多加肉加蛋',     cal: 850 },
-      { time:'14:30', label:'加餐',   food:'泡泡茶(全糖) + 蛋挞/蛋糕1块',                  cal: 380 },
-      { time:'17:00', label:'练后餐', food:'蛋白粉1勺 + 肉包子2个',                        cal: 420 },
-      { time:'19:00', label:'晚餐',   food:'火锅/烧烤/麻辣烫：多吃肉和主食',                cal: 750 },
-      { time:'22:00', label:'睡前',   food:'牛奶1杯 + 泡面/零食',                          cal: 280 },
-    ],
-    note: '<b>休息日：</b>休息日可以放纵！外卖、火锅、奶茶全糖，增重期不用克制。',
-  },
-];
+// ========== DYNAMIC MEAL PLAN (based on weight + phase) ==========
+function getNutritionTargets() {
+  const w = loadWeight(currentDate) || userSettings.startWeight;
+  const p = getPhaseInfo(currentDate).phase;
+  // Phase 1: surplus ~400kcal, Phase 2: surplus ~500kcal, Phase 3: slight deficit
+  if (p === 1) {
+    return {
+      cals: Math.round(w * 45 + 100),   // ~2700 @ 58kg
+      carb: Math.round(w * 5.5),         // ~320g
+      protein: Math.round(w * 1.4),      // ~80g
+      fat: Math.round(w * 1.3),          // ~75g
+      label: 'Phase 1 · 热量盈余'
+    };
+  } else if (p === 2) {
+    return {
+      cals: Math.round(w * 46 + 150),    // ~2850 @ 58kg
+      carb: Math.round(w * 6),           // ~350g
+      protein: Math.round(w * 1.8),      // ~105g
+      fat: Math.round(w * 1.4),          // ~80g
+      label: 'Phase 2 · 增肌热量'
+    };
+  } else {
+    return {
+      cals: Math.round(w * 40 + 100),    // ~2450 @ 62kg
+      carb: Math.round(w * 4.5),         // ~280g
+      protein: Math.round(w * 2.0),      // ~125g
+      fat: Math.round(w * 1.2),          // ~75g
+      label: 'Phase 3 · 雕刻热量'
+    };
+  }
+}
 
+function generateMealPlan(isWorkDay, isTrainingDay) {
+  const t = getNutritionTargets();
+  const meals = [];
+  const rem = { carb: t.carb, protein: t.protein, fat: t.fat, cals: t.cals };
 
-function getMealPlanForDate(dateStr, isWorkDay, isTrainingDay) {
-  // Use date to deterministically pick a plan (same date = same plan)
-  const hash = dateStr.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  const plans = isWorkDay ? WORKDAY_PLANS : RESTDAY_PLANS;
-  const plan = plans[hash % plans.length];
+  if (isWorkDay) {
+    // 6 meals: breakfast, snack, lunch, snack, dinner, bedtime
+    meals.push({ time:'07:00', label:'早餐', food:genMeal(rem, 0.20, '吐司+花生酱+香蕉+牛奶+鸡蛋'), cal: Math.round(t.cals*0.20) });
+    meals.push({ time:'10:00', label:'加餐', food:genMeal(rem, 0.10, '坚果+水果+酸奶'), cal: Math.round(t.cals*0.10) });
+    meals.push({ time:'12:30', label:'午餐', food:genMeal(rem, 0.22, '米饭+鸡胸/牛肉+炒蔬菜'), cal: Math.round(t.cals*0.22) });
+    meals.push({ time:'15:30', label:'加餐', food:genMeal(rem, 0.10, '燕麦棒+牛奶'), cal: Math.round(t.cals*0.10) });
+    meals.push({ time:'19:00', label:'晚餐', food:genMeal(rem, 0.28, '大碗米饭+红烧肉/牛排+蔬菜+汤'), cal: Math.round(t.cals*0.28) });
+    meals.push({ time:'21:30', label:'睡前', food:genMeal(rem, 0.10, '蛋白粉+香蕉/牛奶'), cal: Math.round(t.cals*0.10) });
+  } else {
+    // 5 meals: brunch, snack, post-workout, dinner, bedtime
+    meals.push({ time:'12:00', label:'早午餐', food:genMeal(rem, 0.28, '大份意面/炒饭+煎蛋+牛油果+牛奶'), cal: Math.round(t.cals*0.28) });
+    meals.push({ time:'14:30', label:'加餐', food:genMeal(rem, 0.10, '水果沙拉+酸奶+坚果'), cal: Math.round(t.cals*0.10) });
+    meals.push({ time:'17:15', label:'练后餐', food:genMeal(rem, 0.18, '蛋白粉+吐司+花生酱+牛奶'), cal: Math.round(t.cals*0.18) });
+    meals.push({ time:'19:00', label:'晚餐', food:genMeal(rem, 0.30, '米饭/意面+肉类+蔬菜'), cal: Math.round(t.cals*0.30) });
+    meals.push({ time:'22:00', label:'睡前', food:genMeal(rem, 0.14, '牛奶+水煮蛋/坚果'), cal: Math.round(t.cals*0.14) });
+  }
 
   let trainingNote = '';
   if (isTrainingDay) {
-    trainingNote = isWorkDay
-      ? '训练前30分钟：2根香蕉。训练后30分钟内：蛋白粉1勺 + 2片吐司+花生酱。'
-      : '训练前30分钟：2根香蕉。训练后立刻喝蛋白粉+吐司。';
+    trainingNote = '训练前30分钟：2根香蕉。训练后30分钟内：蛋白粉1勺 + 快碳。';
   }
 
-  return { ...plan, trainingNote };
+  const note = isWorkDay
+    ? '<b>上班日：</b>晚餐是唯一规律正餐，多吃米饭和肉。加餐随身带。'
+    : '<b>休息日：</b>中午第一餐多吃点，训练后立刻补碳水+蛋白。';
+
+  return { name: t.label, targetCal: t.cals, meals, note, trainingNote };
+}
+
+function genMeal(rem, pct, defaultFood) {
+  // Returns a simple meal description; the actual macros tracking is simplified
+  return defaultFood;
 }
 
 function calcMealPlan(isWorkDay, isTrainingDay) {
-  return getMealPlanForDate(currentDate, isWorkDay, isTrainingDay);
+  return generateMealPlan(isWorkDay, isTrainingDay);
+}
+
+function getMealPlanForDate(dateStr, isWorkDay, isTrainingDay) {
+  return generateMealPlan(isWorkDay, isTrainingDay);
 }
 
 function renderMealPlan() {
@@ -1386,11 +1545,14 @@ function renderStatusAndTraining() {
   }
 
   if (qTrain) {
+    const p = getPhaseInfo(currentDate).phase;
+    const rmLabel = p === 1 ? '10-15RM' : p === 2 ? '8-12RM' : '8-12RM + 有氧';
+    const cardioHint = p === 3 ? ' | 今日建议：20-30分钟有氧（快走/单车）' : '';
     statusArea.innerHTML = `
       <div class="status-row">
         <div class="badge training"><span class="big">🏋️</span>训练日</div>
-        <div class="badge rest"><span class="big">🎯</span>10-15RM</div>
-      </div>`;
+        <div class="badge rest"><span class="big">🎯</span>${rmLabel}</div>
+      </div>${cardioHint ? '<div class="tip-box" style="margin-bottom:4px;">💡 ' + cardioHint + '</div>' : ''}`;
   } else {
     statusArea.innerHTML = `
       <div class="status-row">
@@ -1650,13 +1812,125 @@ function celebrate() {
 }
 
 // ========== WEIGHT TAB ==========
+function getWeightHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_WEIGHT_HISTORY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // Migrate old wt_ keys to new format
+  const history = [];
+  for (let i=0;i<90;i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const w = loadWeight(ds);
+    if (w !== null) history.unshift({ date: ds, weight: w });
+  }
+  if (history.length > 0) {
+    localStorage.setItem(STORAGE_KEY_WEIGHT_HISTORY, JSON.stringify(history));
+  }
+  return history;
+}
+
+function saveWeightToHistory(dateStr, weight) {
+  const history = getWeightHistory();
+  // Replace or add
+  const idx = history.findIndex(r => r.date === dateStr);
+  if (idx >= 0) history[idx].weight = weight;
+  else history.push({ date: dateStr, weight: weight });
+  // Keep sorted by date
+  history.sort((a,b) => a.date.localeCompare(b.date));
+  localStorage.setItem(STORAGE_KEY_WEIGHT_HISTORY, JSON.stringify(history));
+  return history;
+}
+
+function drawWeightChart() {
+  const canvas = document.getElementById('weightCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 180 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width;
+  const H = 180;
+  const pad = { top: 15, right: 15, bottom: 25, left: 15 };
+
+  // Collect last 14 days
+  const today = getTodayStr();
+  const points = [];
+  const d0 = new Date(today+'T00:00:00');
+  for (let i=13;i>=0;i--) {
+    const dd = new Date(d0); dd.setDate(dd.getDate()-i);
+    const ds = dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+    const w = loadWeight(ds);
+    points.push({ date: ds.slice(5), weight: w, idx: 13-i });
+  }
+  const valid = points.filter(p => p.weight !== null);
+  if (valid.length < 2) {
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text3').trim();
+    ctx.font = '13px "Noto Serif SC", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('记录体重后这里会显示趋势图', W/2, H/2);
+    return;
+  }
+
+  const allW = valid.map(p => p.weight);
+  const minW = Math.min(...allW) - 1;
+  const maxW = Math.max(...allW) + 1;
+  const range = maxW - minW || 1;
+
+  // Draw grid
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-light').trim();
+  ctx.lineWidth = 0.5;
+  for (let i=0;i<=3;i++) {
+    const y = pad.top + (H - pad.top - pad.bottom) * i / 3;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
+    // Y label
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text3').trim();
+    ctx.font = '10px "Noto Serif SC", serif';
+    ctx.textAlign = 'right';
+    const val = maxW - range * i / 3;
+    ctx.fillText(val.toFixed(1), pad.left-3, y+4);
+  }
+
+  // Draw line
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+  ctx.beginPath();
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  ctx.lineWidth = 2;
+  let firstPoint = true;
+  valid.forEach(p => {
+    const x = pad.left + (p.idx / 13) * plotW;
+    const y = pad.top + ((maxW - p.weight) / range) * plotH;
+    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw dots
+  valid.forEach(p => {
+    const x = pad.left + (p.idx / 13) * plotW;
+    const y = pad.top + ((maxW - p.weight) / range) * plotH;
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    ctx.fill();
+    // Label
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+    ctx.font = '10px "Noto Serif SC", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.weight.toFixed(1), x, y-8);
+  });
+}
+
 function renderWeightTab() {
   // Fill input with today's logged weight
   const w = loadWeight(currentDate);
   const inp = document.getElementById('weightInput');
   if (inp && w) inp.value = w;
 
-  // Trend
+  // Trend vs yesterday
   const trendEl = document.getElementById('weightTrend');
   if (trendEl) {
     const yesterday = new Date(currentDate+'T00:00:00'); yesterday.setDate(yesterday.getDate()-1);
@@ -1675,43 +1949,14 @@ function renderWeightTab() {
     }
   }
 
-  // Mini chart: last 14 days
-  const chartEl = document.getElementById('weightChart');
-  if (chartEl) {
-    const weights = [];
-    const labels = [];
-    const d = new Date(currentDate+'T00:00:00');
-    for (let i=13;i>=0;i--) {
-      const dd = new Date(d); dd.setDate(dd.getDate()-i);
-      const ds = dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
-      const ww = loadWeight(ds);
-      weights.push(ww);
-      labels.push(ds.slice(5)); // MM-DD
-    }
-    const valid = weights.filter(x=>x!==null);
-    if (valid.length === 0) {
-      chartEl.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;height:100%;display:flex;align-items:center;justify-content:center;">暂无体重数据<br>在上方记录体重后这里会显示趋势</div>';
-    } else {
-      const minW = Math.min(...valid) - 0.5;
-      const maxW = Math.max(...valid) + 0.5;
-      const range = maxW - minW || 1;
-      let chartHtml = '';
-      weights.forEach((ww,idx) => {
-        const h = ww ? Math.round(((ww - minW)/range)*100) : 0;
-        chartHtml += `<div class="weight-bar-wrap">
-          <div class="weight-bar" style="height:${h}%;${ww?'':'opacity:0;'}"></div>
-          <div class="weight-bar-label">${ww?ww:'--'}</div>
-        </div>`;
-      });
-      chartEl.innerHTML = chartHtml;
-    }
-  }
+  // Canvas chart
+  setTimeout(drawWeightChart, 50);
 
   // History list
   const listEl = document.getElementById('weightHistoryList');
   if (listEl) {
     const records = [];
-    for (let i=0;i<30;i++) {
+    for (let i=0;i<90;i++) {
       const dd = new Date(); dd.setDate(dd.getDate()-i);
       const ds = dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
       const ww = loadWeight(ds);
@@ -1752,6 +1997,7 @@ function logWeight() {
   const val = parseFloat(inp.value);
   if (isNaN(val) || val < 30 || val > 200) { showToast('请输入有效体重（30-200kg）'); return; }
   saveWeight(currentDate, val);
+  saveWeightToHistory(currentDate, val);
   const msgEl = document.getElementById('weightMsg');
   if (msgEl) {
     msgEl.textContent = '✅ 已记录 ' + val + ' kg';
