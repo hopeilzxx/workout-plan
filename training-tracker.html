@@ -1394,87 +1394,151 @@ function answerQ(type, val) {
   render();  // full re-render so questions UI, meal plan, and training all update instantly
 }
 
-// ========== MEAL PLAN ==========
-// Multiple meal plan variations for rotation
-// ========== DYNAMIC MEAL PLAN (based on weight + phase) ==========
+// ========== DYNAMIC MEAL PLAN (based on weight + phase, multi-plan rotation) ==========
 function getNutritionTargets() {
   const w = loadWeight(currentDate) || userSettings.startWeight;
   const p = getPhaseInfo(currentDate).phase;
-  // Phase 1: surplus ~400kcal, Phase 2: surplus ~500kcal, Phase 3: slight deficit
   if (p === 1) {
-    return {
-      cals: Math.round(w * 45 + 100),   // ~2700 @ 58kg
-      carb: Math.round(w * 5.5),         // ~320g
-      protein: Math.round(w * 1.4),      // ~80g
-      fat: Math.round(w * 1.3),          // ~75g
-      label: 'Phase 1 · 热量盈余'
-    };
+    return { cals: Math.round(w * 45 + 100), carb: Math.round(w * 5.5), protein: Math.round(w * 1.4), fat: Math.round(w * 1.3), label: 'Phase 1 · 热量盈余' };
   } else if (p === 2) {
-    return {
-      cals: Math.round(w * 46 + 150),    // ~2850 @ 58kg
-      carb: Math.round(w * 6),           // ~350g
-      protein: Math.round(w * 1.8),      // ~105g
-      fat: Math.round(w * 1.4),          // ~80g
-      label: 'Phase 2 · 增肌热量'
-    };
+    return { cals: Math.round(w * 46 + 150), carb: Math.round(w * 6), protein: Math.round(w * 1.8), fat: Math.round(w * 1.4), label: 'Phase 2 · 增肌热量' };
   } else {
-    return {
-      cals: Math.round(w * 40 + 100),    // ~2450 @ 62kg
-      carb: Math.round(w * 4.5),         // ~280g
-      protein: Math.round(w * 2.0),      // ~125g
-      fat: Math.round(w * 1.2),          // ~75g
-      label: 'Phase 3 · 雕刻热量'
-    };
+    return { cals: Math.round(w * 40 + 100), carb: Math.round(w * 4.5), protein: Math.round(w * 2.0), fat: Math.round(w * 1.2), label: 'Phase 3 · 雕刻热量' };
   }
 }
 
-function generateMealPlan(isWorkDay, isTrainingDay) {
-  const t = getNutritionTargets();
-  const meals = [];
-  const rem = { carb: t.carb, protein: t.protein, fat: t.fat, cals: t.cals };
-
-  if (isWorkDay) {
-    // 6 meals: breakfast, snack, lunch, snack, dinner, bedtime
-    meals.push({ time:'07:00', label:'早餐', food:genMeal(rem, 0.20, '吐司+花生酱+香蕉+牛奶+鸡蛋'), cal: Math.round(t.cals*0.20) });
-    meals.push({ time:'10:00', label:'加餐', food:genMeal(rem, 0.10, '坚果+水果+酸奶'), cal: Math.round(t.cals*0.10) });
-    meals.push({ time:'12:30', label:'午餐', food:genMeal(rem, 0.22, '米饭+鸡胸/牛肉+炒蔬菜'), cal: Math.round(t.cals*0.22) });
-    meals.push({ time:'15:30', label:'加餐', food:genMeal(rem, 0.10, '燕麦棒+牛奶'), cal: Math.round(t.cals*0.10) });
-    meals.push({ time:'19:00', label:'晚餐', food:genMeal(rem, 0.28, '大碗米饭+红烧肉/牛排+蔬菜+汤'), cal: Math.round(t.cals*0.28) });
-    meals.push({ time:'21:30', label:'睡前', food:genMeal(rem, 0.10, '蛋白粉+香蕉/牛奶'), cal: Math.round(t.cals*0.10) });
-  } else {
-    // 5 meals: brunch, snack, post-workout, dinner, bedtime
-    meals.push({ time:'12:00', label:'早午餐', food:genMeal(rem, 0.28, '大份意面/炒饭+煎蛋+牛油果+牛奶'), cal: Math.round(t.cals*0.28) });
-    meals.push({ time:'14:30', label:'加餐', food:genMeal(rem, 0.10, '水果沙拉+酸奶+坚果'), cal: Math.round(t.cals*0.10) });
-    meals.push({ time:'17:15', label:'练后餐', food:genMeal(rem, 0.18, '蛋白粉+吐司+花生酱+牛奶'), cal: Math.round(t.cals*0.18) });
-    meals.push({ time:'19:00', label:'晚餐', food:genMeal(rem, 0.30, '米饭/意面+肉类+蔬菜'), cal: Math.round(t.cals*0.30) });
-    meals.push({ time:'22:00', label:'睡前', food:genMeal(rem, 0.14, '牛奶+水煮蛋/坚果'), cal: Math.round(t.cals*0.14) });
+// Build a meal plan: dynamically scale portions based on nutrition targets
+function scaleMeal(baseFood, phase) {
+  if (phase === 3) {
+    // Phase 3: smaller portions, higher protein
+    return baseFood
+      .replace(/大份|大碗|超大/g, '小份')
+      .replace(/2碗/g, '1碗').replace(/1.5碗/g, '1碗')
+      .replace(/3个/g, '2个').replace(/2个/g, '1个')
+      .replace(/2根/g, '1根').replace(/2片/g, '1片')
+      .replace(/300g/g, '200g').replace(/250g/g, '180g')
+      .replace(/200g/g, '150g').replace(/2块/g, '1块')
+      + '（雕刻期 · 控量）';
   }
-
-  let trainingNote = '';
-  if (isTrainingDay) {
-    trainingNote = '训练前30分钟：2根香蕉。训练后30分钟内：蛋白粉1勺 + 快碳。';
-  }
-
-  const note = isWorkDay
-    ? '<b>上班日：</b>晚餐是唯一规律正餐，多吃米饭和肉。加餐随身带。'
-    : '<b>休息日：</b>中午第一餐多吃点，训练后立刻补碳水+蛋白。';
-
-  return { name: t.label, targetCal: t.cals, meals, note, trainingNote };
+  return baseFood;
 }
 
-function genMeal(rem, pct, defaultFood) {
-  // Returns a simple meal description; the actual macros tracking is simplified
-  return defaultFood;
+// Macro breakdown per meal (simplified, used for display)
+function macroHint(cal, carbRatio, proteinRatio, fatRatio) {
+  return Math.round(cal * carbRatio / 4) + 'g C · ' + Math.round(cal * proteinRatio / 4) + 'g P · ' + Math.round(cal * fatRatio / 9) + 'g F';
 }
 
-function calcMealPlan(isWorkDay, isTrainingDay) {
-  return generateMealPlan(isWorkDay, isTrainingDay);
+// ====== WORKDAY PLANS (6 meals) ======
+function buildWorkdayPlans(t, phase) {
+  return [
+    {
+      name: '家常版 🍚',
+      note: '<b>上班日 · 家常版：</b>晚餐是唯一规律正餐，米饭多盛半碗，菜选带肥肉的。加餐随身带。',
+      meals: [
+        { time:'07:00', label:'早餐',  food:scaleMeal('吐司2片+花生酱1勺+香蕉1根+全脂牛奶1杯+水煮蛋1个', phase), cal:Math.round(t.cals*0.18), macros:macroHint(Math.round(t.cals*0.18),0.45,0.20,0.35) },
+        { time:'10:00', label:'加餐',  food:scaleMeal('混合坚果1小把+苹果1个+酸奶1盒', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.35,0.15,0.50) },
+        { time:'12:30', label:'午餐',  food:scaleMeal('便当：米饭1.5碗+红烧鸡腿2个+炒青菜', phase), cal:Math.round(t.cals*0.22), macros:macroHint(Math.round(t.cals*0.22),0.45,0.30,0.25) },
+        { time:'15:30', label:'加餐',  food:scaleMeal('燕麦棒2块+全脂牛奶1盒', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.50,0.12,0.38) },
+        { time:'19:00', label:'晚餐',  food:scaleMeal('大碗米饭+红烧肉/可乐鸡+炒蔬菜+汤', phase), cal:Math.round(t.cals*0.30), macros:macroHint(Math.round(t.cals*0.30),0.40,0.35,0.25) },
+        { time:'21:30', label:'睡前',  food:scaleMeal('热牛奶1杯+水煮蛋1个/蛋白粉1勺', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.20,0.45,0.35) },
+      ]
+    },
+    {
+      name: '澳超快手版 🦘',
+      note: '<b>上班日 · 澳超版：</b>Woolworths/Coles 熟食区很方便，烤鸡、肉派都是高热量好选择。',
+      meals: [
+        { time:'07:00', label:'早餐',  food:scaleMeal('Weet-Bix 3片+全脂牛奶+香蕉1根+水煮蛋1个', phase), cal:Math.round(t.cals*0.18), macros:macroHint(Math.round(t.cals*0.18),0.50,0.18,0.32) },
+        { time:'10:00', label:'加餐',  food:scaleMeal('混合坚果1小把+酸奶1盒', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.25,0.18,0.57) },
+        { time:'12:30', label:'午餐',  food:scaleMeal('Woolworths烤鸡卷+寿司盒+全脂牛奶1盒', phase), cal:Math.round(t.cals*0.22), macros:macroHint(Math.round(t.cals*0.22),0.40,0.30,0.30) },
+        { time:'15:30', label:'加餐',  food:scaleMeal('蛋白棒1根+香蕉1根', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.40,0.30,0.30) },
+        { time:'19:00', label:'晚餐',  food:scaleMeal('超市熟食：烤鸡半只+土豆泥+沙拉+面包', phase), cal:Math.round(t.cals*0.30), macros:macroHint(Math.round(t.cals*0.30),0.35,0.40,0.25) },
+        { time:'21:30', label:'睡前',  food:scaleMeal('牛奶1杯+吐司1片+花生酱', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.40,0.20,0.40) },
+      ]
+    },
+    {
+      name: '放纵版 🎉',
+      note: '<b>上班日 · 放纵版：</b>外卖也能增重——盖饭选大份、奶茶选全糖，别怕热量！',
+      meals: [
+        { time:'07:30', label:'早餐',  food:scaleMeal('Flat White(全脂)+牛角包2个+香蕉', phase), cal:Math.round(t.cals*0.18), macros:macroHint(Math.round(t.cals*0.18),0.40,0.15,0.45) },
+        { time:'10:00', label:'加餐',  food:scaleMeal('香蕉1根+蛋白粉1勺+牛奶', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.40,0.35,0.25) },
+        { time:'12:30', label:'午餐',  food:scaleMeal('外卖：大份盖饭/炒饭，加肉加蛋', phase), cal:Math.round(t.cals*0.22), macros:macroHint(Math.round(t.cals*0.22),0.45,0.28,0.27) },
+        { time:'15:30', label:'加餐',  food:scaleMeal('珍珠奶茶(全糖)+蛋糕/蛋挞1个', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.55,0.08,0.37) },
+        { time:'19:00', label:'晚餐',  food:scaleMeal('正餐：大碗米饭+排骨/鸡腿+蔬菜+汤', phase), cal:Math.round(t.cals*0.30), macros:macroHint(Math.round(t.cals*0.30),0.38,0.35,0.27) },
+        { time:'21:30', label:'睡前',  food:scaleMeal('牛奶燕麦1杯/泡面1包', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.50,0.15,0.35) },
+      ]
+    }
+  ];
+}
+
+// ====== RESTDAY PLANS (5 meals) ======
+function buildRestdayPlans(t, phase) {
+  return [
+    {
+      name: '家常版 🍚',
+      note: '<b>休息日 · 家常版：</b>中午第一餐多吃点，晚上加个夜宵，轻松凑够热量。',
+      meals: [
+        { time:'12:00', label:'早午餐', food:scaleMeal('大份炒饭+煎蛋2个+牛油果半个+全脂牛奶', phase), cal:Math.round(t.cals*0.28), macros:macroHint(Math.round(t.cals*0.28),0.42,0.25,0.33) },
+        { time:'14:30', label:'加餐',   food:scaleMeal('水果(西瓜/哈密瓜)+酸奶1盒+坚果', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.40,0.15,0.45) },
+        { time:'17:15', label:'练后餐', food:scaleMeal('蛋白粉1勺+香蕉2根+吐司2片+花生酱', phase), cal:Math.round(t.cals*0.18), macros:macroHint(Math.round(t.cals*0.18),0.50,0.28,0.22) },
+        { time:'19:00', label:'晚餐',   food:scaleMeal('米饭大碗+红烧肉/牛排+蔬菜+汤', phase), cal:Math.round(t.cals*0.30), macros:macroHint(Math.round(t.cals*0.30),0.38,0.35,0.27) },
+        { time:'22:00', label:'睡前',   food:scaleMeal('牛奶1杯+水煮蛋2个/方便面1包', phase), cal:Math.round(t.cals*0.14), macros:macroHint(Math.round(t.cals*0.14),0.40,0.25,0.35) },
+      ]
+    },
+    {
+      name: '澳式Brunch版 🦘',
+      note: '<b>休息日 · 澳式Brunch版：</b>澳洲Brunch热量高，周末去Cafe吃也是增重好帮手。',
+      meals: [
+        { time:'12:00', label:'早午餐', food:scaleMeal('Big Breakfast：煎蛋2个+培根+烤豆+吐司+Flat White', phase), cal:Math.round(t.cals*0.28), macros:macroHint(Math.round(t.cals*0.28),0.35,0.30,0.35) },
+        { time:'14:30', label:'加餐',   food:scaleMeal('Acai Bowl / 水果沙拉+格兰诺拉麦片', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.55,0.10,0.35) },
+        { time:'17:15', label:'练后餐', food:scaleMeal('蛋白粉1勺+香蕉2根+牛奶', phase), cal:Math.round(t.cals*0.18), macros:macroHint(Math.round(t.cals*0.18),0.55,0.30,0.15) },
+        { time:'19:00', label:'晚餐',   food:scaleMeal('烤肉：羊排/牛排300g+烤土豆+芦笋', phase), cal:Math.round(t.cals*0.30), macros:macroHint(Math.round(t.cals*0.30),0.25,0.45,0.30) },
+        { time:'22:00', label:'睡前',   food:scaleMeal('热巧克力+饼干2块/蛋白粉', phase), cal:Math.round(t.cals*0.14), macros:macroHint(Math.round(t.cals*0.14),0.45,0.20,0.35) },
+      ]
+    },
+    {
+      name: '放纵版 🎉',
+      note: '<b>休息日 · 放纵版：</b>休息日可以放纵！外卖、火锅、奶茶全糖，增重期不用克制。',
+      meals: [
+        { time:'12:00', label:'早午餐', food:scaleMeal('外卖：大份盖饭/炒面，加肉加蛋加肠', phase), cal:Math.round(t.cals*0.28), macros:macroHint(Math.round(t.cals*0.28),0.42,0.25,0.33) },
+        { time:'14:30', label:'加餐',   food:scaleMeal('珍珠奶茶(全糖)+蛋挞/蛋糕1块', phase), cal:Math.round(t.cals*0.10), macros:macroHint(Math.round(t.cals*0.10),0.60,0.08,0.32) },
+        { time:'17:15', label:'练后餐', food:scaleMeal('蛋白粉1勺+肉包子2个/吐司+花生酱', phase), cal:Math.round(t.cals*0.18), macros:macroHint(Math.round(t.cals*0.18),0.45,0.30,0.25) },
+        { time:'19:00', label:'晚餐',   food:scaleMeal('火锅/烧烤/麻辣烫：多吃肉和主食，少喝汤', phase), cal:Math.round(t.cals*0.30), macros:macroHint(Math.round(t.cals*0.30),0.25,0.40,0.35) },
+        { time:'22:00', label:'睡前',   food:scaleMeal('牛奶1杯+泡面/零食', phase), cal:Math.round(t.cals*0.14), macros:macroHint(Math.round(t.cals*0.14),0.50,0.12,0.38) },
+      ]
+    }
+  ];
 }
 
 function getMealPlanForDate(dateStr, isWorkDay, isTrainingDay) {
-  return generateMealPlan(isWorkDay, isTrainingDay);
+  const t = getNutritionTargets();
+  const phase = getPhaseInfo(dateStr).phase;
+  const plans = isWorkDay ? buildWorkdayPlans(t, phase) : buildRestdayPlans(t, phase);
+
+  // Deterministic rotation by date hash + optional manual offset
+  const hash = dateStr.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const offset = currentData.mealOffset || 0;
+  const plan = plans[(hash + offset) % plans.length];
+
+  let trainingNote = '';
+  if (isTrainingDay) {
+    trainingNote = '训练前30分钟：2根香蕉。训练后30分钟内：蛋白粉1勺 + 快碳（吐司/香蕉）。';
+  }
+
+  return {
+    ...plan,
+    targetCal: t.cals,
+    phaseLabel: t.label,
+    planIndex: (hash + offset) % plans.length,
+    totalPlans: plans.length,
+    trainingNote
+  };
 }
 
+function calcMealPlan(isWorkDay, isTrainingDay) {
+  return getMealPlanForDate(currentDate, isWorkDay, isTrainingDay);
+}
+
+// ========== RENDER MEAL PLAN ==========
 function renderMealPlan() {
   const area = document.getElementById('mealArea');
   if (!area) return;
@@ -1492,33 +1556,57 @@ function renderMealPlan() {
       <span class="ex-arrow" id="mealArrow" style="margin-left:8px;transition:transform 0.2s ease;${isExpanded?'transform:rotate(180deg);':''}">▾</span>
     </div>`;
 
-  // Always visible: target cal, actual cal, note
+  // Macro summary row
+  const t = getNutritionTargets();
+  html += `<div style="display:flex;gap:12px;font-size:12px;color:var(--text2);margin-bottom:8px;flex-wrap:wrap;">
+    <span>🍞 碳水 <b style="color:var(--accent-text);">${t.carb}g</b></span>
+    <span>🥩 蛋白 <b style="color:var(--accent-text);">${t.protein}g</b></span>
+    <span>🧈 脂肪 <b style="color:var(--accent-text);">${t.fat}g</b></span>
+  </div>`;
+
+  // Calorie input
   html += `<div class="cal-input-row">
     <span>今天大约吃了</span>
-    <input type="number" id="actualCalInput" value="${savedCals||''}" placeholder="2300" min="0" step="50">
+    <input type="number" id="actualCalInput" value="${savedCals||''}" placeholder="${plan.targetCal}" min="0" step="50">
     <span>kcal</span>
     <button onclick="saveActualCals()">记录</button>
   </div>`;
   if (savedCals) {
-    html += `<div style="font-size:13px;font-weight:700;color:var(--green-text);margin-top:6px;text-align:center;">已记录 ${savedCals} kcal</div>`;
+    const diff = savedCals - plan.targetCal;
+    const diffStr = diff >= 0 ? '+' + diff : '' + diff;
+    html += `<div style="font-size:13px;font-weight:700;color:${diff>=0?'var(--green-text)':'var(--red-text)'};margin-top:6px;text-align:center;">已记录 ${savedCals} kcal（${diffStr} vs 目标）</div>`;
   }
   if (plan.note) html += `<div class="meal-note">💡 ${plan.note}</div>`;
   if (plan.trainingNote) html += `<div class="tip-box">⚡ ${plan.trainingNote}</div>`;
 
-  // Expandable meal details
-  html += `<div class="ex-detail" id="mealDetail" style="${isExpanded?'max-height:600px;':'max-height:0;'}overflow:hidden;transition:max-height 0.3s cubic-bezier(0.4,0,0.2,1);">
+  // Expandable meals
+  html += `<div class="ex-detail" id="mealDetail" style="${isExpanded?'max-height:900px;':'max-height:0;'}overflow:hidden;transition:max-height 0.3s cubic-bezier(0.4,0,0.2,1);">
     <div class="ex-detail-inner" style="padding:10px 0 4px;">`;
   plan.meals.forEach(m => {
     html += `<div class="meal-row">
       <span class="m-time">${m.time}<br>${m.label}</span>
-      <span class="m-food">${m.food}</span>
+      <span class="m-food">${m.food}${m.macros ? '<div style="font-size:10px;color:var(--text3);margin-top:2px;">' + m.macros + '</div>' : ''}</span>
       <span class="m-cal">${m.cal}</span>
     </div>`;
   });
   html += `</div></div>`;
 
+  // Shuffle button
+  html += `<div style="text-align:center;margin-top:8px;">
+    <button onclick="shuffleMealPlan()" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 16px;font-size:13px;cursor:pointer;color:var(--text2);font-family:var(--font);">
+      🔄 换一套（${plan.planIndex+1}/${plan.totalPlans}）
+    </button>
+  </div>`;
+
   html += '</div>';
   area.innerHTML = html;
+}
+
+function shuffleMealPlan() {
+  if (!currentData) return;
+  currentData.mealOffset = (currentData.mealOffset || 0) + 1;
+  saveData(currentDate, currentData);
+  renderMealPlan();
 }
 
 function saveActualCals() {
