@@ -177,6 +177,25 @@ a { color: var(--accent); text-decoration: none; }
 .ov-trend-up { color: var(--green-text); font-weight: 700; }
 .ov-trend-down { color: var(--red-text); font-weight: 700; }
 
+/* Eye toggle on overview cards */
+.ov-eye {
+  position: absolute; top: 12px; right: 12px;
+  width: 28px; height: 28px; border-radius: 50%;
+  border: none; background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3); transition: all 0.15s;
+  z-index: 2; padding: 0;
+}
+.ov-eye svg { width: 18px; height: 18px; display: block; }
+.ov-eye svg line, .ov-eye svg path, .ov-eye svg circle {
+  stroke: var(--text3); transition: stroke 0.15s;
+}
+.ov-eye:active { transform: scale(0.88); background: var(--border-light); }
+.ov-value.hidden-value {
+  font-size: 24px; letter-spacing: 6px; color: var(--text3);
+}
+
 /* ========== SECTION LABEL ========== */
 .section-label {
   font-size: 11px; font-weight: 700; color: var(--text3);
@@ -672,21 +691,33 @@ a { color: var(--accent); text-decoration: none; }
 <div class="section-label">概览</div>
 <div class="overview-grid">
   <div class="overview-card" onclick="focusWeightInput()">
+    <button class="ov-eye" id="eye-weight" onclick="event.stopPropagation();toggleEye('weight')" title="显示/隐藏">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <div class="ov-label">⚖️ 当前体重</div>
     <div class="ov-value" id="ovWeight">--<span class="ov-unit">kg</span></div>
     <div class="ov-sub" id="ovWeightSub">记录今日体重 ↓</div>
   </div>
   <div class="overview-card">
+    <button class="ov-eye" id="eye-goal" onclick="event.stopPropagation();toggleEye('goal')" title="显示/隐藏">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <div class="ov-label">🎯 目标体重</div>
-    <div class="ov-value">55<span class="ov-unit">kg</span></div>
+    <div class="ov-value" id="ovGoal">55<span class="ov-unit">kg</span></div>
     <div class="ov-sub" id="ovProgressText">加载中...</div>
   </div>
   <div class="overview-card">
+    <button class="ov-eye" id="eye-week" onclick="event.stopPropagation();toggleEye('week')" title="显示/隐藏">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <div class="ov-label">📈 本周变化</div>
     <div class="ov-value" id="ovWeekChange">--<span class="ov-unit">kg</span></div>
     <div class="ov-sub" id="ovWeekSub">与上周相比</div>
   </div>
   <div class="overview-card">
+    <button class="ov-eye" id="eye-rate" onclick="event.stopPropagation();toggleEye('rate')" title="显示/隐藏">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <div class="ov-label">✅ 训练完成率</div>
     <div class="ov-value" id="ovRate">--<span class="ov-unit">%</span></div>
     <div class="ov-sub" id="ovRateSub">近30天</div>
@@ -823,12 +854,32 @@ const ENCOURAGEMENTS = [
   '🚀 皮包骨变身计划，进行中！',
   '🎉 打卡完成！好好吃饭，好好休息 💤',
 ];
+const REST_ENCOURAGEMENTS = [
+  '😴 上班辛苦啦，好好吃饭休息！',
+  '🍜 休息也是增重的一部分，多吃点！',
+  '☕ 今天好好歇着，肌肉在偷偷长呢',
+  '🛋️ 躺平无罪，增重万岁！好好犒劳自己',
+  '🌙 睡个好觉，明天更有力气练',
+  '🥩 休息日多吃肉，身体需要燃料',
+  '💤 恢复比训练更重要，今天你做得对',
+  '🎮 放松一天，明天继续战斗！',
+];
 
 // ========== STATE ==========
 let currentDate = getTodayStr();
 let currentData = null;
 let qWork  = null;
 let qTrain = null;
+
+// Eye toggle state (persisted in localStorage)
+let eyeStates = { weight:false, goal:false, week:false, rate:false };
+
+function loadEyeStates() {
+  try { const s = JSON.parse(localStorage.getItem('eye_states')); if (s) eyeStates = s; } catch(e) {}
+}
+function saveEyeStates() {
+  localStorage.setItem('eye_states', JSON.stringify(eyeStates));
+}
 
 // ========== THEME ==========
 function initTheme() {
@@ -945,7 +996,84 @@ function render() {
   renderHistoryTab();
 }
 
+// ========== EYE TOGGLE ==========
+// Eye SVG icons
+const EYE_OPEN  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+function toggleEye(card) {
+  eyeStates[card] = !eyeStates[card];
+  saveEyeStates();
+
+  // Update button icon
+  const btn = document.getElementById('eye-' + card);
+  if (btn) btn.innerHTML = eyeStates[card] ? EYE_CLOSE : EYE_OPEN;
+
+  // Re-apply with fresh cache
+  applyEyeStates._cached = {};
+  applyEyeStates();
+}
+
+function applyEyeStates() {
+  const elOW = document.getElementById('ovWeight');
+  const elGoal = document.getElementById('ovGoal');
+  const elWeek = document.getElementById('ovWeekChange');
+  const elRate = document.getElementById('ovRate');
+  const elSubW = document.getElementById('ovWeightSub');
+  const elSubP = document.getElementById('ovProgressText');
+  const elSubWeek = document.getElementById('ovWeekSub');
+  const elSubRate = document.getElementById('ovRateSub');
+
+  // Cache the real values for restoring
+  if (!applyEyeStates._cached) applyEyeStates._cached = {};
+
+  // Current weight
+  if (eyeStates.weight) {
+    if (elOW && !applyEyeStates._cached.ovWeight) applyEyeStates._cached.ovWeight = elOW.innerHTML;
+    if (elOW) { elOW.classList.add('hidden-value'); elOW.innerHTML = '***'; }
+    if (elSubW && !applyEyeStates._cached.ovWeightSub) applyEyeStates._cached.ovWeightSub = elSubW.innerHTML;
+    if (elSubW) elSubW.innerHTML = '---';
+  } else {
+    if (elOW && applyEyeStates._cached.ovWeight) { elOW.classList.remove('hidden-value'); elOW.innerHTML = applyEyeStates._cached.ovWeight; }
+    if (elSubW && applyEyeStates._cached.ovWeightSub) elSubW.innerHTML = applyEyeStates._cached.ovWeightSub;
+  }
+
+  // Goal weight
+  if (eyeStates.goal) {
+    if (elGoal && !applyEyeStates._cached.ovGoal) applyEyeStates._cached.ovGoal = elGoal.innerHTML;
+    if (elGoal) { elGoal.classList.add('hidden-value'); elGoal.innerHTML = '***'; }
+    if (elSubP && !applyEyeStates._cached.ovProgress) applyEyeStates._cached.ovProgress = elSubP.innerHTML;
+    if (elSubP) elSubP.innerHTML = '---';
+  } else {
+    if (elGoal && applyEyeStates._cached.ovGoal) { elGoal.classList.remove('hidden-value'); elGoal.innerHTML = applyEyeStates._cached.ovGoal; }
+    if (elSubP && applyEyeStates._cached.ovProgress) elSubP.innerHTML = applyEyeStates._cached.ovProgress;
+  }
+
+  // Week change
+  if (eyeStates.week) {
+    if (elWeek && !applyEyeStates._cached.ovWeek) applyEyeStates._cached.ovWeek = elWeek.innerHTML;
+    if (elWeek) { elWeek.classList.add('hidden-value'); elWeek.innerHTML = '***'; }
+    if (elSubWeek && !applyEyeStates._cached.ovWeekSub) applyEyeStates._cached.ovWeekSub = elSubWeek.innerHTML;
+    if (elSubWeek) elSubWeek.innerHTML = '---';
+  } else {
+    if (elWeek && applyEyeStates._cached.ovWeek) { elWeek.classList.remove('hidden-value'); elWeek.innerHTML = applyEyeStates._cached.ovWeek; }
+    if (elSubWeek && applyEyeStates._cached.ovWeekSub) elSubWeek.innerHTML = applyEyeStates._cached.ovWeekSub;
+  }
+
+  // Completion rate
+  if (eyeStates.rate) {
+    if (elRate && !applyEyeStates._cached.ovRate) applyEyeStates._cached.ovRate = elRate.innerHTML;
+    if (elRate) { elRate.classList.add('hidden-value'); elRate.innerHTML = '***'; }
+    if (elSubRate && !applyEyeStates._cached.ovRateSub) applyEyeStates._cached.ovRateSub = elSubRate.innerHTML;
+    if (elSubRate) elSubRate.innerHTML = '---';
+  } else {
+    if (elRate && applyEyeStates._cached.ovRate) { elRate.classList.remove('hidden-value'); elRate.innerHTML = applyEyeStates._cached.ovRate; }
+    if (elSubRate && applyEyeStates._cached.ovRateSub) elSubRate.innerHTML = applyEyeStates._cached.ovRateSub;
+  }
+}
+
 function renderOverview() {
+  // Render data first (always show real values)
   // Current weight
   const w = loadWeight(currentDate);
   const elOW = document.getElementById('ovWeight');
@@ -954,10 +1082,14 @@ function renderOverview() {
   // Progress to goal (50 -> 55)
   const startWeight = 50;
   const goalWeight = 55;
+  const elProgress = document.getElementById('ovProgressText');
   if (w) {
     const pct = Math.round(Math.min(100, Math.max(0, ((w - startWeight) / (goalWeight - startWeight)) * 100)));
     const elSub = document.getElementById('ovWeightSub');
     if (elSub) elSub.innerHTML = '目标进度 <b style="color:var(--accent-text)">' + pct + '%</b>';
+    if (elProgress) elProgress.textContent = '距目标还有 ' + (goalWeight - w).toFixed(1) + ' kg';
+  } else {
+    if (elProgress) elProgress.textContent = '目标 55kg · 需增 5kg';
   }
 
   // Week change
@@ -965,6 +1097,10 @@ function renderOverview() {
 
   // Completion rate
   renderCompletionRate();
+
+  // After all data rendered, apply eye toggle states
+  applyEyeStates._cached = {}; // clear cache so next render captures fresh values
+  applyEyeStates();
 }
 
 function renderWeekChange() {
@@ -1007,6 +1143,8 @@ function renderCompletionRate() {
     const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const q = loadQ(ds); if (!q.train) continue;
     const data = loadData(ds); if (!data) continue;
+    // Only count training days (exclude rest day check-ins)
+    if (data.restDay) continue;
     records.push({ date:ds, data });
   }
   const completed = records.filter(r=>r.data.completed).length;
@@ -1265,6 +1403,22 @@ function renderStatusAndTraining() {
 
   // Training: check if already completed today
   if (currentData && currentData.completed) {
+    if (currentData.restDay) {
+      // Rest day completed
+      const enc = REST_ENCOURAGEMENTS[Math.floor(Math.random()*REST_ENCOURAGEMENTS.length)];
+      mainArea.innerHTML = `
+        <div class="done-card">
+          <div class="done-icon">😴</div>
+          <div class="done-title" style="color:var(--accent-text);">今日已打卡（休息日）</div>
+          <div class="done-enc" style="margin:12px 0 6px;font-size:15px;font-weight:700;color:var(--accent-text);line-height:1.6;">子豫，${enc}</div>
+          <div class="done-sub">休息也是增重的一部分 💤</div>
+          <div style="margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button class="secondary-btn" onclick="resetToday()">✏️ 修改记录</button>
+            <button class="secondary-btn" onclick="deleteTodayRecord()" style="border-color:var(--red);color:var(--red-text);">🗑️ 删除记录</button>
+          </div>
+        </div>`;
+      return;
+    }
     const enc = ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)];
     mainArea.innerHTML = `
       <div class="done-card">
@@ -1398,9 +1552,32 @@ function updateReps(exId, val) {
 // ========== SAVE DAY (with celebration) ==========
 function saveDay() {
   if (qTrain === null) { showToast('请先回答上方两个问题 😊'); return; }
-  if (!qTrain) { showToast('休息日好好吃饭休息 😴'); return; }
 
+  if (!qTrain) {
+    // Rest day: mark completed but with restDay flag (not counted as training)
+    currentData.completed = true;
+    currentData.restDay = true;
+    saveData(currentDate, currentData);
+
+    celebrate();
+    render();
+
+    const enc = REST_ENCOURAGEMENTS[Math.floor(Math.random()*REST_ENCOURAGEMENTS.length)];
+    showToast('打卡完成！' + enc);
+
+    setTimeout(()=>{
+      const enc2 = REST_ENCOURAGEMENTS[Math.floor(Math.random()*REST_ENCOURAGEMENTS.length)];
+      showToast(enc2);
+    }, 1800);
+
+    renderStatusAndTraining();
+    renderOverview();
+    return;
+  }
+
+  // Training day
   currentData.completed = true;
+  currentData.restDay = false;
   saveData(currentDate, currentData);
 
   // Check if any exercises were actually filled in for upgrade hints
@@ -1583,6 +1760,8 @@ function renderHistoryTab() {
     const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const q = loadQ(ds); if (!q.train) continue;
     const data = loadData(ds); if (!data) continue;
+    // Only show training days in history
+    if (data.restDay) continue;
     records.push({ date:ds, data });
     if (records.length>=8) break;
   }
@@ -1616,6 +1795,8 @@ function showStats() {
     const ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const q = loadQ(ds); if (!q.train) continue;
     const data = loadData(ds); if (!data) continue;
+    // Only count training days in stats
+    if (data.restDay) continue;
     allRecords.push({ date:ds, data });
   }
   const completedDays = allRecords.filter(r=>r.data.completed).length;
@@ -1663,6 +1844,7 @@ function changeDay(delta) {
 function resetToday() {
   if (!confirm('确定要修改今天的打卡记录吗？')) return;
   currentData.completed = false;
+  currentData.restDay = false;
   // Reset all sets
   EXERCISES.forEach(ex => {
     if (currentData.exercises[ex.id]) {
@@ -1722,6 +1904,12 @@ function showToast(msg) {
 
 // ========== INIT ==========
 initTheme();
+loadEyeStates();
+// Sync eye button icons on load
+Object.keys(eyeStates).forEach(card => {
+  const btn = document.getElementById('eye-' + card);
+  if (btn) btn.innerHTML = eyeStates[card] ? EYE_CLOSE : EYE_OPEN;
+});
 render();
 
 // Register Service Worker for PWA offline support
