@@ -1121,7 +1121,7 @@ function getDefaultData() {
       reps: ex.isTime ? ex.defaultWeight : ex.repsRange[1],
     };
   });
-  return { exercises: exData, completed: false, date: currentDate };
+  return { exercises: exData, completed: false, date: currentDate, mealLog: [] };
 }
 
 function formatDate(dateStr) {
@@ -1548,8 +1548,10 @@ function renderMealPlan() {
   if (qWork === null) { area.innerHTML = ''; return; }
 
   const plan = calcMealPlan(qWork, qTrain === true);
-  const savedCals = currentData.actualCals || 0;
+  const mealLog = currentData.mealLog || [];
+  const totalCals = mealLog.reduce((sum, entry) => sum + entry.cals, 0);
   const isExpanded = currentData.mealExpanded;
+  const completed = currentData && currentData.completed;
 
   let html = '<div class="section-label">🍽️ 饮食推荐</div>';
   html += `<div class="meal-card">
@@ -1567,18 +1569,64 @@ function renderMealPlan() {
     <span>🧈 脂肪 <b style="color:var(--accent-text);">${t.fat}g</b></span>
   </div>`;
 
-  // Calorie input
-  html += `<div class="cal-input-row">
-    <span>今天大约吃了</span>
-    <input type="number" id="actualCalInput" value="${savedCals||''}" placeholder="${plan.targetCal}" min="0" step="50">
-    <span>kcal</span>
-    <button onclick="saveActualCals()">记录</button>
-  </div>`;
-  if (savedCals) {
-    const diff = savedCals - plan.targetCal;
-    const diffStr = diff >= 0 ? '+' + diff : '' + diff;
-    html += `<div style="font-size:13px;font-weight:700;color:${diff>=0?'var(--green-text)':'var(--red-text)'};margin-top:6px;text-align:center;">已记录 ${savedCals} kcal（${diffStr} vs 目标）</div>`;
+  // --- Calorie log section ---
+  if (completed) {
+    // Already checked in: show total only, no input
+    if (totalCals > 0) {
+      const diff = totalCals - plan.targetCal;
+      const diffStr = diff >= 0 ? '+' + diff : '' + diff;
+      html += `<div style="text-align:center;padding:12px 0;">
+        <div style="font-size:13px;color:var(--text2);">今日摄入</div>
+        <div style="font-size:24px;font-weight:700;color:${diff>=0?'var(--green-text)':'var(--red-text)'};">${totalCals} kcal</div>
+        <div style="font-size:12px;color:${diff>=0?'var(--green-text)':'var(--red-text)'};">${diffStr} vs 目标 ${plan.targetCal} kcal</div>
+      </div>`;
+      // Show log entries
+      html += '<div style="margin-top:4px;">';
+      mealLog.forEach((entry, i) => {
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text2);padding:4px 8px;border-bottom:1px solid var(--border-light);">
+          <span>🍽️ ${entry.label || '第'+(i+1)+'次'}</span>
+          <span style="font-weight:600;">${entry.cals} kcal</span>
+        </div>`;
+      });
+      html += '</div>';
+    } else {
+      html += `<div style="text-align:center;padding:12px 0;font-size:13px;color:var(--text3);">未记录摄入</div>`;
+    }
+  } else {
+    // Not checked in: allow adding entries
+    html += `<div class="cal-input-row" style="flex-wrap:wrap;gap:6px;">
+      <span style="font-size:13px;white-space:nowrap;">记录摄入</span>
+      <input type="number" id="mealCalInput" placeholder="kcal" min="1" step="10" style="width:80px;">
+      <input type="text" id="mealLabelInput" placeholder="什么（可选）" style="width:100px;font-size:13px;">
+      <button onclick="addMealLog()">➕ 添加</button>
+    </div>`;
+
+    // Show running total + log
+    if (mealLog.length > 0) {
+      html += '<div style="margin-top:8px;">';
+      // Running total
+      const diff = totalCals - plan.targetCal;
+      const diffStr = diff >= 0 ? '+' + diff : '' + diff;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--accent-bg);border-radius:var(--radius-xs);margin-bottom:6px;">
+        <span style="font-size:14px;font-weight:700;">累计摄入</span>
+        <span style="font-size:18px;font-weight:700;color:${diff>=0?'var(--green-text)':'var(--red-text)'};">${totalCals} kcal <span style="font-size:12px;">(${diffStr})</span></span>
+      </div>`;
+      // Log entries
+      html += '<div style="max-height:160px;overflow-y:auto;">';
+      mealLog.forEach((entry, i) => {
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border-light);">
+          <span>🍽️ ${entry.label || '第'+(i+1)+'次'}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:600;">${entry.cals} kcal</span>
+            <button onclick="deleteMealLog(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 2px;line-height:1;" title="删除">&times;</button>
+          </span>
+        </div>`;
+      });
+      html += '</div>';
+      html += '</div>';
+    }
   }
+
   if (plan.note) html += `<div class="meal-note">💡 ${plan.note}</div>`;
   if (plan.trainingNote) html += `<div class="tip-box">⚡ ${plan.trainingNote}</div>`;
 
@@ -1612,15 +1660,31 @@ function shuffleMealPlan() {
   renderMealPlan();
 }
 
-function saveActualCals() {
-  const el = document.getElementById('actualCalInput');
-  if (!el) return;
-  const val = parseInt(el.value);
-  if (isNaN(val) || val < 0) return;
-  currentData.actualCals = val;
+function addMealLog() {
+  if (!currentData) return;
+  const calEl = document.getElementById('mealCalInput');
+  const labelEl = document.getElementById('mealLabelInput');
+  if (!calEl) return;
+  const cals = parseInt(calEl.value);
+  if (isNaN(cals) || cals <= 0) { showToast('请输入有效的卡路里数'); return; }
+  const label = (labelEl && labelEl.value.trim()) ? labelEl.value.trim() : null;
+
+  if (!currentData.mealLog) currentData.mealLog = [];
+  currentData.mealLog.push({ cals, label, time: new Date().toISOString() });
+  // Also update actualCals for backward compat
+  currentData.actualCals = currentData.mealLog.reduce((s, e) => s + e.cals, 0);
   saveData(currentDate, currentData);
   renderMealPlan();
-  showToast('已记录 ' + val + ' kcal 🍽️');
+  showToast('+ ' + cals + ' kcal 🍽️');
+}
+
+function deleteMealLog(index) {
+  if (!currentData || !currentData.mealLog) return;
+  if (currentData.completed) { showToast('已打卡，不能修改了'); return; }
+  currentData.mealLog.splice(index, 1);
+  currentData.actualCals = currentData.mealLog.reduce((s, e) => s + e.cals, 0);
+  saveData(currentDate, currentData);
+  renderMealPlan();
 }
 
 // ========== STATUS + TRAINING ==========
