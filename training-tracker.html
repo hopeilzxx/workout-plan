@@ -1541,6 +1541,103 @@ function calcMealPlan(isWorkDay, isTrainingDay) {
   return getMealPlanForDate(currentDate, isWorkDay, isTrainingDay);
 }
 
+// ========== FOOD DATABASE (local, common foods in Australia) ==========
+const FOOD_DB = [
+  { category: '主食/谷物', items: [
+    { name: '白米饭（1碗/150g）', cals: 200 },
+    { name: '糙米饭（1碗/150g）', cals: 180 },
+    { name: '白面包（1片）', cals: 80 },
+    { name: '全麦面包（1片）', cals: 70 },
+    { name: '燕麦片（40g干）', cals: 150 },
+    { name: '意大利面（煮好100g）', cals: 130 },
+    { name: '馒头（1个/80g）', cals: 200 },
+  ]},
+  { category: '肉类/蛋白', items: [
+    { name: '鸡胸肉（100g）', cals: 165 },
+    { name: '鸡腿肉（100g）', cals: 215 },
+    { name: '瘦牛肉（100g）', cals: 250 },
+    { name: '猪里脊（100g）', cals: 190 },
+    { name: '三文鱼（100g）', cals: 208 },
+    { name: '鸡蛋（1个/50g）', cals: 70 },
+    { name: '鸡蛋全熟（2个）', cals: 140 },
+    { name: '蛋白粉（1勺/30g）', cals: 120 },
+  ]},
+  { category: '奶制品', items: [
+    { name: '全脂牛奶（250ml）', cals: 150 },
+    { name: '低脂牛奶（250ml）', cals: 105 },
+    { name: '希腊酸奶（100g）', cals: 130 },
+    { name: '切达奶酪（1片/20g）', cals: 80 },
+  ]},
+  { category: '水果/零食', items: [
+    { name: '香蕉（1根/120g）', cals: 105 },
+    { name: '苹果（1个/200g）', cals: 100 },
+    { name: '混合坚果（30g）', cals: 180 },
+    { name: '花生酱（1勺/20g）', cals: 120 },
+    { name: '黑巧克力70%（20g）', cals: 120 },
+    { name: '蛋白棒（1根）', cals: 200 },
+  ]},
+  { category: '外食/速食', items: [
+    { name: '味增拉面（1碗）', cals: 550 },
+    { name: '牛肉盖饭（1碗）', cals: 650 },
+    { name: '鸡胸沙拉（1份）', cals: 350 },
+    { name: '汉堡（1个）', cals: 500 },
+    { name: '披萨（1片）', cals: 285 },
+    { name: 'Sushi卷（1个）', cals: 40 },
+    { name: '便当（1份）', cals: 600 },
+  ]},
+  { category: '饮料', items: [
+    { name: '可乐（330ml）', cals: 140 },
+    { name: '橙汁（250ml）', cals: 110 },
+    { name: '啤酒（375ml）', cals: 160 },
+    { name: '葡萄酒（150ml）', cals: 125 },
+    { name: '运动饮料（500ml）', cals: 125 },
+  ]},
+];
+
+function renderFoodPicker() {
+  let html = '<div id="foodPicker" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);" onclick="if(event.target===this)closeFoodPicker()">';
+  html += '<div style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:92%;max-width:420px;max-height:80vh;background:var(--card);border-radius:var(--radius);padding:16px;overflow-y:auto;box-shadow:var(--shadow-lg);">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><span style="font-size:15px;font-weight:700;">🍴 常见食物卡路里</span><button onclick="closeFoodPicker()" style="background:none;border:none;font-size:20px;cursor:pointer;line-height:1;">&times;</button></div>';
+
+  FOOD_DB.forEach(cat => {
+    html += `<div style="margin-bottom:8px;"><div style="font-size:12px;font-weight:700;color:var(--accent-text);padding:4px 0;border-bottom:1px solid var(--border-light);margin-bottom:4px;">${cat.category}</div>`;
+    cat.items.forEach(food => {
+      html += `<div class="food-item" onclick="pickFood(${food.cals}, '${food.name.replace(/'/g, "\\'")}')" style="display:flex;justify-content:space-between;align-items:center;padding:7px 8px;border-radius:var(--radius-xs);cursor:pointer;font-size:13px;transition:background 0.15s;" onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='transparent'">
+        <span>${food.name}</span>
+        <span style="font-weight:600;color:var(--accent-text);white-space:nowrap;margin-left:8px;">${food.cals} kcal</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  html += '<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--text3);">选择后卡路里会填入输入框，可修改后再添加 📝</div>';
+  html += '</div></div>';
+  return html;
+}
+
+function openFoodPicker() {
+  let picker = document.getElementById('foodPicker');
+  if (!picker) {
+    document.body.insertAdjacentHTML('beforeend', renderFoodPicker());
+    picker = document.getElementById('foodPicker');
+  }
+  picker.style.display = 'block';
+}
+
+function closeFoodPicker() {
+  const picker = document.getElementById('foodPicker');
+  if (picker) picker.style.display = 'none';
+}
+
+function pickFood(cals, name) {
+  const calEl = document.getElementById('mealCalInput');
+  const labelEl = document.getElementById('mealLabelInput');
+  if (calEl) calEl.value = cals;
+  if (labelEl) labelEl.value = name;
+  closeFoodPicker();
+  if (calEl) calEl.focus();
+}
+
 // ========== RENDER MEAL PLAN ==========
 function renderMealPlan() {
   const area = document.getElementById('mealArea');
@@ -1594,10 +1691,11 @@ function renderMealPlan() {
     }
   } else {
     // Not checked in: allow adding entries
-    html += `<div class="cal-input-row" style="flex-wrap:wrap;gap:6px;">
+    html += `<div class="cal-input-row" style="flex-wrap:wrap;gap:6px;align-items:center;">
       <span style="font-size:13px;white-space:nowrap;">记录摄入</span>
       <input type="number" id="mealCalInput" placeholder="kcal" min="1" step="10" style="width:80px;">
-      <input type="text" id="mealLabelInput" placeholder="什么（可选）" style="width:100px;font-size:13px;">
+      <input type="text" id="mealLabelInput" placeholder="备注（可选）" style="width:90px;font-size:13px;">
+      <button onclick="openFoodPicker()" style="background:var(--orange-bg);border:1px solid var(--orange);color:var(--orange-text);border-radius:var(--radius-xs);padding:5px 10px;font-size:12px;cursor:pointer;font-family:var(--font);">🍴 选食物</button>
       <button onclick="addMealLog()">➕ 添加</button>
     </div>`;
 
